@@ -1,9 +1,31 @@
 import { useId } from "react";
 import type { PieceType } from "../game/pieces";
 
+export type Hue = "amethyst" | "rose" | "sapphire" | "emerald" | "amber";
+
+type Pal = { edge: string; light: string; mid: string; dark: string; deep: string; glow: string };
+
+/** Gemas arcanas: una por pieza, todas con el mismo acabado de cristal. */
+const PALETTES: Record<Hue, Pal> = {
+  amethyst: { edge: "#f1e8ff", light: "#cbb0ff", mid: "#9c63ff", dark: "#6a35cc", deep: "#46219a", glow: "#b58bff" },
+  rose: { edge: "#ffe6f4", light: "#ff9fd2", mid: "#f25fae", dark: "#c23a86", deep: "#8e2462", glow: "#ff7ac4" },
+  sapphire: { edge: "#e6efff", light: "#9fc0ff", mid: "#5b86f5", dark: "#3457d0", deep: "#22379e", glow: "#7aa0ff" },
+  emerald: { edge: "#e0fff3", light: "#8ff0c8", mid: "#2fc78d", dark: "#1c9568", deep: "#106a49", glow: "#5fe5b0" },
+  amber: { edge: "#fff4dc", light: "#ffd98a", mid: "#f5a93a", dark: "#cf7d1f", deep: "#9a5712", glow: "#ffc46b" },
+};
+
+/** Color por defecto de cada pieza. */
+export const PIECE_HUE: Record<PieceType, Hue> = {
+  K: "amethyst",
+  Q: "rose",
+  R: "sapphire",
+  B: "emerald",
+  N: "amber",
+};
+
 type Props = {
   type: PieceType;
-  hue?: "amethyst" | "rose";
+  hue?: Hue;
   size?: number;
   className?: string;
 };
@@ -15,19 +37,11 @@ type Props = {
  * con acabado de cristal: degradado vertical, brillo especular lateral, rim
  * light y glow morado. viewBox 90x112, centro en x=45, base en y≈100.
  */
-export default function Piece({
-  type,
-  hue = "amethyst",
-  size = 96,
-  className,
-}: Props) {
+export default function Piece({ type, hue, size = 96, className }: Props) {
   const uid = useId().replace(/:/g, "");
   const id = (k: string) => `${k}-${uid}`;
 
-  const p =
-    hue === "rose"
-      ? { edge: "#ffe3f5", light: "#ff9fd9", mid: "#e25fb4", dark: "#a8338a", deep: "#7e1f68", glow: "#ff7ad1" }
-      : { edge: "#f1e8ff", light: "#cbb0ff", mid: "#9c63ff", dark: "#6a35cc", deep: "#46219a", glow: "#b58bff" };
+  const p = PALETTES[hue ?? PIECE_HUE[type]];
 
   return (
     <svg
@@ -87,8 +101,6 @@ export default function Piece({
     </svg>
   );
 }
-
-type Pal = { edge: string; light: string; mid: string; dark: string; deep: string; glow: string };
 
 /**
  * Devuelve el cuerpo (de la base hacia arriba) de cada pieza.
@@ -163,34 +175,42 @@ function bodyShape(type: PieceType, fill: string, p: Pal, outlineOnly: boolean) 
           <circle cx="45" cy="18" r="3.6" {...props} />
         </g>
       );
-    case "N":
+    case "N": {
+      // Cabeza de caballo (mirando a la izquierda), silueta Staunton.
+      const head =
+        "M52,86 " +
+        "C55,74 55,62 52,53 " + // dorso del cuello
+        "C50,46 49,40 48,35 " + // hacia la nuca
+        "L51,21 " + // oreja trasera (subida)
+        "L46,27 " + // valle entre orejas
+        "L44,18 " + // oreja delantera
+        "L40,27 " + // frente (bajada)
+        "C36,33 31,40 27,47 " + // frente -> cara
+        "C25,50 25,53 28,53 " + // ceja -> hocico
+        "L26,55 " + // punta del morro
+        "L33,53 " + // boca
+        "C37,56 37,60 41,62 " + // mandíbula
+        "C36,65 34,73 37,80 " + // garganta / pecho
+        "L39,86 Z";
       return (
         <g>
-          {/* cabeza de caballo (mirando a la izquierda) */}
-          <path
-            d="M54,86
-               C56,72 56,60 54,52
-               C53,44 50,38 44,35
-               C46,30 49,26 48,21
-               L50,15
-               L44,20
-               C42,17 39,17 37,21
-               C33,25 29,33 26,42
-               C25,45 26,47 29,47
-               L35,46
-               C38,50 38,54 42,57
-               C37,60 35,68 37,76
-               L39,86 Z"
-            {...props}
-          />
-          {/* crin a lo largo del cuello */}
+          <path d={head} {...props} />
+          {/* crin escalonada en el dorso */}
           {!outlineOnly && (
-            <path d="M50,16 C53,24 54,34 53,44" stroke={p.deep} strokeWidth="1.6" fill="none" opacity="0.55" strokeLinecap="round" />
+            <path
+              d="M50,24 C53,32 54,42 52,52 M48,30 C50,36 50,44 49,50"
+              stroke={p.deep}
+              strokeWidth="1.4"
+              fill="none"
+              opacity="0.5"
+              strokeLinecap="round"
+            />
           )}
           {/* ojo y ollar */}
-          {!outlineOnly && <circle cx="39" cy="33" r="1.8" fill={p.deep} />}
-          {!outlineOnly && <circle cx="29" cy="44" r="1.2" fill={p.deep} opacity="0.7" />}
+          {!outlineOnly && <circle cx="39" cy="34" r="1.9" fill={p.deep} />}
+          {!outlineOnly && <ellipse cx="29" cy="50" rx="1.4" ry="1" fill={p.deep} opacity="0.7" />}
         </g>
       );
+    }
   }
 }
