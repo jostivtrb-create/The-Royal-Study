@@ -40,8 +40,24 @@ const page = await browser.newPage({
 });
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
-await page.screenshot({ path: "snapshots/prototype-phone.png" });
+await page.screenshot({ path: "snapshots/home.png" });
+
+// Entrar al juego.
+const playBtn = page.getByRole("button", { name: /Jugar local/i });
+if (await playBtn.count()) {
+  await playBtn.click();
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: "snapshots/game.png" });
+
+  // Seleccionar una pieza para mostrar elevación + casillas destino.
+  const piece = page.locator(".piece-slot").first();
+  if (await piece.count()) {
+    await piece.click({ force: true });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: "snapshots/game-selected.png" });
+  }
+}
 
 await browser.close();
 server.close();
-console.log("OK: snapshots/prototype-phone.png");
+console.log("OK: snapshots/home.png, snapshots/game.png");

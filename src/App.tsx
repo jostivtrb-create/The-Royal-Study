@@ -1,66 +1,75 @@
 import { useState } from "react";
-import Board, { type BoardState } from "./components/Board";
+import Board, { type Positions } from "./components/Board";
+import Home from "./components/Home";
 import Piece from "./components/Piece";
-import { PIECE_ORDER, PIECE_NAME_ES } from "./game/pieces";
+import type { PieceType } from "./game/pieces";
 
-const START: BoardState = [
-  ["R", null, "B"],
-  [null, "Q", null],
-  ["N", null, "K"],
+type Screen = "home" | "game";
+
+const START: Positions = {
+  R: { row: 0, col: 0 },
+  B: { row: 0, col: 2 },
+  Q: { row: 1, col: 1 },
+  N: { row: 2, col: 0 },
+  K: { row: 2, col: 2 },
+};
+
+// Objetivo de muestra (vista compacta, todavía sin lógica real).
+const TARGET: Array<[PieceType, number, number]> = [
+  ["K", 0, 1],
+  ["B", 1, 0],
+  ["Q", 1, 1],
+  ["R", 1, 2],
+  ["N", 2, 1],
 ];
-
-const TARGET: BoardState = [
-  [null, "K", null],
-  ["B", "Q", "R"],
-  [null, "N", null],
-];
-
-// Modo galería para revisar piezas (dev). En la app real va en false.
-const GALLERY = false;
 
 export default function App() {
-  const [board] = useState<BoardState>(START);
+  const [screen, setScreen] = useState<Screen>("home");
 
-  if (GALLERY) {
-    return (
-      <div className="app">
-        <header className="title">
-          <h1>The Royal Enchanted</h1>
-          <p>Zoom caballo (revisión)</p>
-        </header>
-        <div className="glass" style={{ padding: 18, display: "flex", justifyContent: "center" }}>
-          <Piece type="N" size={200} />
-        </div>
-        <div style={{ padding: 18, borderRadius: 22, background: "#2c1b54", display: "flex", justifyContent: "center" }}>
-          <Piece type="N" size={200} />
-        </div>
-        <div className="glass" style={{ padding: 18, display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-          {PIECE_ORDER.map((t) => (
-            <div key={t} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 92 }}>
-              <Piece type={t} size={86} />
-              <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>{PIECE_NAME_ES[t]}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: 18, borderRadius: 22, background: "#2c1b54", display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-          {PIECE_ORDER.map((t) => (
-            <div key={t} style={{ width: 92, display: "flex", justifyContent: "center" }}>
-              <Piece type={t} size={86} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  if (screen === "home") {
+    return <Home onPlayLocal={() => setScreen("game")} />;
+  }
+  return <Game onExit={() => setScreen("home")} />;
+}
+
+function Game({ onExit }: { onExit: () => void }) {
+  const [positions, setPositions] = useState<Positions>(START);
+  const [selected, setSelected] = useState<PieceType | null>(null);
+
+  // En esta fase de pulido aún no hay reglas: los destinos válidos son las
+  // casillas vacías. El motor de ajedrez llega en la siguiente fase.
+  const occupied = new Set(
+    Object.values(positions).map((p) => `${p!.row},${p!.col}`),
+  );
+  const targets: Array<[number, number]> = [];
+  if (selected) {
+    for (let r = 0; r < 3; r++)
+      for (let c = 0; c < 3; c++)
+        if (!occupied.has(`${r},${c}`)) targets.push([r, c]);
   }
 
-  return (
-    <div className="app">
-      <header className="title">
-        <h1>The Royal Enchanted</h1>
-        <p>Puzzle de ajedrez místico</p>
-      </header>
+  const onPieceClick = (t: PieceType) =>
+    setSelected((cur) => (cur === t ? null : t));
 
-      {/* Marcador */}
+  const onTileClick = (row: number, col: number) => {
+    if (!selected) return;
+    if (occupied.has(`${row},${col}`)) return;
+    setPositions((cur) => ({ ...cur, [selected]: { row, col } }));
+    setSelected(null);
+  };
+
+  return (
+    <div className="app screen-in">
+      <div className="topbar">
+        <button className="icon-btn" onClick={onExit} aria-label="Volver">
+          ←
+        </button>
+        <div className="title topbar-title">
+          <h1>The Royal Enchanted</h1>
+        </div>
+        <div style={{ width: 40 }} />
+      </div>
+
       <div className="hud">
         <div className="score glass">
           <div className="who">Jugador 1</div>
@@ -68,7 +77,9 @@ export default function App() {
         </div>
         <div className="round glass">
           <div className="who">Ronda</div>
-          <div className="round-n">3<span>/10</span></div>
+          <div className="round-n">
+            3<span>/10</span>
+          </div>
         </div>
         <div className="score glass">
           <div className="who">Jugador 2</div>
@@ -76,20 +87,38 @@ export default function App() {
         </div>
       </div>
 
-      {/* Objetivo (mini tablero meta) */}
       <div className="target glass">
         <span className="target-label">Objetivo</span>
-        <MiniBoard board={TARGET} />
+        <div className="mini">
+          {Array.from({ length: 9 }).map((_, i) => {
+            const r = Math.floor(i / 3);
+            const c = i % 3;
+            const cell = TARGET.find(([, tr, tc]) => tr === r && tc === c);
+            return (
+              <div key={i} className={"mini-cell" + ((r + c) % 2 ? " mini-cell--b" : "")}>
+                {cell && <Piece type={cell[0]} size={30} />}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tablero principal */}
       <div className="board-wrap glass">
-        <Board board={board} />
+        <Board
+          positions={positions}
+          selected={selected}
+          targets={targets}
+          onPieceClick={onPieceClick}
+          onTileClick={onTileClick}
+        />
       </div>
 
-      {/* Barra de apuesta */}
       <div className="bid glass">
-        <div className="bid-q">¿En cuántos movimientos lo resuelves?</div>
+        <div className="bid-q">
+          {selected
+            ? "Toca una casilla resaltada para mover"
+            : "Toca una pieza para seleccionarla"}
+        </div>
         <div className="bid-row">
           {[2, 3, 4, 5, 6].map((n) => (
             <button key={n} className={"chip" + (n === 4 ? " chip--on" : "")}>
@@ -99,21 +128,6 @@ export default function App() {
         </div>
         <button className="bid-go">Apostar ✦</button>
       </div>
-    </div>
-  );
-}
-
-/** Mini tablero (vista cenital) para mostrar el objetivo de forma compacta. */
-function MiniBoard({ board }: { board: BoardState }) {
-  return (
-    <div className="mini">
-      {board.map((row, r) =>
-        row.map((cell, c) => (
-          <div key={`${r}-${c}`} className={"mini-cell" + ((r + c) % 2 ? " mini-cell--b" : "")}>
-            {cell && <Piece type={cell} size={30} />}
-          </div>
-        )),
-      )}
     </div>
   );
 }
