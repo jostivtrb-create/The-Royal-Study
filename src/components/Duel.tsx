@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Piece from "./Piece";
+import Confetti from "./Confetti";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
+import { sfx } from "../game/sfx";
+import { haptics } from "../game/haptics";
 import {
   applyOp,
   equalPlacement,
@@ -60,6 +63,8 @@ export default function Duel({ onExit }: { onExit: () => void }) {
       startExecute(bidder, bid);
       return;
     }
+    if (secs <= 5) sfx.tick();
+    if (secs <= 3) haptics.light();
     const id = setTimeout(() => setSecs((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [phase, secs]);
@@ -86,9 +91,12 @@ export default function Duel({ onExit }: { onExit: () => void }) {
   // Continuidad: las piezas se quedan donde terminaron; solo cambia el objetivo.
   function nextRound() {
     if (round >= TOTAL_ROUNDS) {
+      sfx.win();
+      haptics.win();
       setPhase("gameover");
       return;
     }
+    sfx.tap();
     setTarget(randomTargetFor(positions).target);
     setRound((r) => r + 1);
     setPhase("race");
@@ -107,10 +115,14 @@ export default function Duel({ onExit }: { onExit: () => void }) {
   }
 
   function chooseBidder(p: Player) {
+    sfx.bid();
+    haptics.light();
     setBidder(p);
     setPhase("bid");
   }
   function confirmBid(n: number) {
+    sfx.bid();
+    haptics.light();
     setBid(n);
     setSecs(COUNTER_SECONDS);
     setPhase("counter");
@@ -123,12 +135,22 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     setPhase("execute");
   }
   function counterBid(n: number) {
+    sfx.bid();
+    haptics.light();
     startExecute(opponent, n);
   }
   function counterPass() {
+    sfx.tap();
     startExecute(bidder, bid);
   }
   function finishRound(winner: Player) {
+    if (winner === executor) {
+      sfx.success();
+      haptics.success();
+    } else {
+      sfx.fail();
+      haptics.fail();
+    }
     setRoundWinner(winner);
     setScores((s) => ({ ...s, [winner]: s[winner] + 1 }));
     setPhase("result");
@@ -149,6 +171,8 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     const clicked = sq(row, col);
     const pieceHere = PIECE_ORDER.find((t) => positions[t] === clicked) ?? null;
     if (pieceHere) {
+      sfx.tap();
+      haptics.light();
       setSelected((cur) => (cur === pieceHere ? null : pieceHere));
       return;
     }
@@ -158,12 +182,16 @@ export default function Duel({ onExit }: { onExit: () => void }) {
       setSelected(null);
       return;
     }
+    sfx.move();
+    haptics.move();
     setPositions((cur) => ({ ...cur, [selected]: clicked }));
     setUsed((u) => u + 1);
     setSelected(null);
   }
   function doOp(op: Op) {
     if (phase !== "execute") return;
+    sfx.flip();
+    haptics.light();
     setTarget((t) => applyOp(t, op));
     setUsed((u) => u + 1);
     setSelected(null);
@@ -267,6 +295,7 @@ export default function Duel({ onExit }: { onExit: () => void }) {
       {phase === "result" && roundWinner != null && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
+            <Confetti count={26} />
             <div className="overlay-emoji">✨</div>
             <h2>¡Punto para Jugador {roundWinner}!</h2>
             <p>
@@ -285,6 +314,7 @@ export default function Duel({ onExit }: { onExit: () => void }) {
       {phase === "gameover" && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
+            <Confetti count={48} />
             <div className="overlay-emoji">👑</div>
             <h2>{scores[1] === scores[2] ? "¡Empate!" : `¡Gana Jugador ${scores[1] > scores[2] ? 1 : 2}!`}</h2>
             <div className="overlay-score big">J1 {scores[1]} — {scores[2]} J2</div>

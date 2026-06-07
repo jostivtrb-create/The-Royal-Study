@@ -257,11 +257,11 @@ Tentativo actual: *The Royal Enchanted*. Alternativas a considerar:
 - **Fase 2:** UI/estética (isométrico, cristal, piezas SVG por gema, paleta morada) ✅ hecho.
 - **Fase 3:** Flujo de duelo local (carrera, apuesta, contra-apuesta con timer
   20s, ejecución con presupuesto, transformaciones, puntuación, rondas, fin) ✅ hecho.
-- **Fase 4 (pendiente):** Multijugador online (Firebase + salas) y despliegue
-  en Vercel.
-- **Fase 5 (pendiente):** PWA pulida (íconos 192/512, offline), pantalla de
-  ajustes (idioma/orientación), háptica y efectos de sonido.
-- **Fase 6 (pendiente):** Pulido final (partículas al ganar, más feedback).
+- **Fase 4 (parcial):** PWA instalable + desplegada en Vercel ✅; multijugador
+  online (Firebase + salas) ⏳ pendiente.
+- **Fase 5:** Ajustes (sonido/vibración/orientación) ✅, efectos de sonido
+  (Web Audio) ✅, háptica ✅, partículas/confeti al ganar ✅.
+- **Fase 6 (pendiente):** Multijugador online y más pulido fino.
 
 ---
 

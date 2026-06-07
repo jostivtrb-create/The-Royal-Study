@@ -37,14 +37,18 @@ const click = async (re) => {
   const b = page.getByRole("button", { name: re }).first();
   await b.click({ force: true });
 };
-// Selecciona una pieza tocando casillas hasta que aparezca el resaltado.
-async function selectAPiece() {
+// Selecciona una pieza con movimientos legales (que muestre casillas destino).
+async function selectMovablePiece() {
   const tiles = page.locator(".tile");
   const n = await tiles.count();
   for (let i = 0; i < n; i++) {
     await tiles.nth(i).click({ force: true });
     await page.waitForTimeout(120);
-    if (await page.locator(".piece-slot--sel").count()) return true;
+    if (await page.locator(".tile--hi").count()) return true; // tiene destinos
+    if (await page.locator(".piece-slot--sel").count()) {
+      await tiles.nth(i).click({ force: true }); // pieza sin movimientos: deseleccionar
+      await page.waitForTimeout(60);
+    }
   }
   return false;
 }
@@ -70,7 +74,7 @@ await page.waitForTimeout(500);
 await shot("05-execute");
 
 // Selecciona una pieza para ver destinos resaltados.
-await selectAPiece();
+await selectMovablePiece();
 await page.waitForTimeout(400);
 await shot("06-execute-selected");
 
@@ -85,7 +89,7 @@ await page.getByRole("button", { name: "1", exact: true }).first().click({ force
 await page.waitForTimeout(300);
 await click(/Paso/i); // presupuesto = 1
 await page.waitForTimeout(300);
-await selectAPiece();
+await selectMovablePiece();
 await page.waitForTimeout(200);
 const hi = page.locator(".tile--hi").first();
 if (await hi.count()) await hi.click({ force: true });
@@ -96,6 +100,13 @@ await shot("07-result");
 await click(/Siguiente ronda/i);
 await page.waitForTimeout(700);
 await shot("08-round2");
+
+// Pantalla de ajustes.
+await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+await page.waitForTimeout(500);
+await click(/Ajustes/i);
+await page.waitForTimeout(500);
+await shot("09-settings");
 
 await browser.close();
 server.close();
