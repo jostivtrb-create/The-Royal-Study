@@ -70,7 +70,16 @@ tonos morados**, **premium** y muy cuidada visualmente.
 - **E1. Mecánica central:** Fiel a la idea — posición objetivo + resolver en
   el mínimo de movimientos con reglas de ajedrez.
 - **E2/F — Modo:** **SOLO MULTIJUGADOR** en esta primera versión (el modo
-  solitario y CPU quedan para después). Ver flujo completo en §4.
+  solitario y CPU quedan para después). Dos sub-modos:
+  - **Local (mismo celular / hot-seat):** funciona offline, sin servidor.
+  - **Online (dos celulares):** vía **Firebase** (sincronía en tiempo real,
+    salas con código) y desplegado en **Vercel**.
+  Se construye **local-first** y el online se monta encima. Ver flujo en §4
+  y arquitectura en §13.
+- **Nº de piezas:** **5** (Rey, Dama, Torre, Alfil, Caballo) en el 3×3 — fiel
+  al original (4 casillas libres).
+- **Regla de ejecución:** el ejecutor debe alcanzar el objetivo en **como
+  máximo (≤)** los movimientos apostados (hacerlo en menos también vale).
 - **E3. Deshacer/Reiniciar:** No hay deshacer libre; lo que cuenta es terminar
   la partida y ver quién ganó (al mover, debes cumplir lo apostado).
 - **E4. Mínimo de movimientos:** **Oculto** a los jugadores (el motor del
@@ -116,12 +125,16 @@ Una **ronda** vale **1 punto**. Secuencia:
    - Si **no escribe** un número menor a tiempo → el primero gana el turno de
      mover.
 4. **Ejecución:** quien ganó el turno mueve las piezas para alcanzar el
-   objetivo. Debe cumplir su número apostado.
-   - Si alcanza el objetivo dentro de su apuesta → **gana el punto**.
-   - Si no lo logra → el **otro jugador gana el punto** de la ronda.
+   objetivo en **como máximo (≤)** su número apostado.
+   - Si alcanza el objetivo en ≤ su apuesta → **gana el punto**.
+   - Si no lo logra (se le acaban los movimientos sin igualar el objetivo) →
+     el **otro jugador gana el punto** de la ronda.
 5. Se inicia una nueva ronda (nueva generación al azar).
-6. **Fin de partida:** se juega hasta una meta de puntos (ver pregunta abierta
-   §9 — por definir, propuesta: primero en llegar a 6).
+6. **Fin de partida:** se juega un **número fijo de rondas** (por defecto 10,
+   ajustable en Ajustes: p. ej. 3 / 5 / 7 / 10). Gana quien tenga más puntos
+   al terminar las rondas. (Empate → muerte súbita opcional, por definir.)
+7. **Contra-apuesta:** una sola (P1 apuesta → P2 contra una vez → quien tenga
+   el número menor ejecuta).
 
 **Transformaciones durante la ejecución (§G):** el ejecutor puede rotar/
 reflejar el objetivo; cada transformación consume 1 de su presupuesto de
@@ -197,20 +210,19 @@ escritorio, lo cual queda descartado por las restricciones.)
 
 ---
 
-## 9. Preguntas abiertas (por resolver antes de programar)
+## 9. Preguntas resueltas ✅
 
-1. **Multijugador V1 — ¿local en un mismo celular (hot-seat) u online en dos
-   celulares?** (El online requiere un servidor/backend en tiempo real; el
-   local no necesita nada y encaja con "PWA gratis/offline". Recomendación:
-   empezar con **local mismo dispositivo** y dejar el online para una V2.)
-2. **Regla de ejecución:** ¿el ejecutor debe alcanzar el objetivo en **como
-   máximo** su apuesta, o en **exactamente** ese número?
-3. **Meta de partida:** ¿primero en llegar a **6 puntos** (como el original),
-   un número configurable, o número fijo de rondas?
-4. **Número de piezas en el tablero:** ¿las 5 piezas (fiel) o menos (4) para
-   un movimiento más holgado en 3×3?
-5. **¿Una sola contra-apuesta** (P1 apuesta, P2 contra una vez) o ida y vuelta
-   hasta que uno se plante? (Propuesta: una sola contra-apuesta.)
+1. **Multijugador:** Online (Firebase + Vercel) **y** local en el mismo
+   celular. Se construye local-first; el online se monta encima. ✅
+2. **Regla de ejecución:** Como máximo (≤) la apuesta. ✅
+3. **Meta de partida:** Número fijo de rondas (def. 10, ajustable). ✅
+4. **Número de piezas:** 5 (fiel). ✅
+5. **Contra-apuesta:** Una sola. ✅
+
+### Pendientes menores (con valor por defecto, ajustables luego)
+- Desempate al final de las rondas: propuesta = ronda(s) de muerte súbita.
+- Rango de dificultad del generador: propuesta = mínimo 2–6 movimientos.
+- Número exacto de rondas por defecto: propuesta = 10.
 
 ---
 
@@ -248,3 +260,49 @@ Tentativo actual: *The Royal Enchanted*. Alternativas a considerar:
 - **Fase 4:** PWA (instalable, offline, manifest, íconos), ajustes (idioma/
   orientación), háptica y efectos de sonido.
 - **Fase 5:** Pulido (animaciones, partículas, feedback) y pruebas.
+
+---
+
+## 13. Arquitectura online (Firebase + Vercel)
+
+- **Hosting:** **Vercel** (despliega la PWA estática; plan gratuito).
+- **Tiempo real:** **Firebase Realtime Database** (plan Spark gratuito) para
+  sincronizar el estado de la partida entre los dos celulares.
+- **Salas:** una partida online = una "sala" con **código corto** (ej. 4–6
+  caracteres). El jugador A crea la sala y comparte el código; el jugador B
+  se une con el código.
+- **Estado sincronizado:** posición de piezas, objetivo, apuestas de cada
+  jugador, marca de tiempo de inicio del contador (para que ambos vean los
+  20 s sincronizados), turno actual y marcador.
+- **Reglas de seguridad de Firebase:** básicas para que solo los participantes
+  de una sala modifiquen su estado.
+- **Local-first:** la misma lógica de juego corre sin Firebase para el modo
+  local (hot-seat). El online es una capa opcional encima.
+
+### Requisitos de configuración (los proporciona el usuario)
+Para activar el modo online hará falta (todo en planes gratuitos):
+1. Un **proyecto de Firebase** (consola web; se puede crear desde el celular).
+2. Pegar la **configuración de Firebase** (apiKey, etc.) en el archivo de
+   config / variables de entorno del proyecto.
+3. Una cuenta de **Vercel** para desplegar.
+
+> Mientras tanto, el **modo local funciona sin nada de esto**, así que podemos
+> desarrollar y probar todo el juego de inmediato, y enchufar el online cuando
+> tengas las llaves de Firebase.
+
+---
+
+## 14. Stack técnico (propuesto)
+
+- **Build / framework:** Vite + React + TypeScript (DX limpio, ideal para
+  Vercel, fácil de mantener).
+- **PWA:** `vite-plugin-pwa` (manifest, service worker, instalable + offline).
+- **Estilos / animación:** CSS moderno (glassmorphism, transiciones) +
+  animaciones ligeras; piezas y tablero en **SVG**.
+- **Estado:** store ligero (Zustand o Context) para la lógica de juego.
+- **Online:** SDK de Firebase (Realtime Database).
+- **Motor de puzzle:** módulo propio en TS (reglas de ajedrez en 3×3, BFS para
+  el mínimo, generador con filtro de dificultad).
+
+> Decisión por defecto; ajustable si el usuario prefiere algo más simple
+> (p. ej. HTML/CSS/JS sin framework).
