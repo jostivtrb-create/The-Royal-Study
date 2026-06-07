@@ -26,8 +26,14 @@ export default function App() {
       <div className="app">
         <header className="title">
           <h1>The Royal Enchanted</h1>
-          <p>Galería de piezas (revisión)</p>
+          <p>Zoom caballo (revisión)</p>
         </header>
+        <div className="glass" style={{ padding: 18, display: "flex", justifyContent: "center" }}>
+          <Piece type="N" size={200} />
+        </div>
+        <div style={{ padding: 18, borderRadius: 22, background: "#2c1b54", display: "flex", justifyContent: "center" }}>
+          <Piece type="N" size={200} />
+        </div>
         <div className="glass" style={{ padding: 18, display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
           {PIECE_ORDER.map((t) => (
             <div key={t} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 92 }}>

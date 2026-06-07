@@ -178,37 +178,38 @@ function bodyShape(type: PieceType, fill: string, p: Pal, outlineOnly: boolean) 
     case "N": {
       // Cabeza de caballo (mirando a la izquierda), silueta Staunton.
       const head =
-        "M52,86 " +
-        "C55,74 55,62 52,53 " + // dorso del cuello
-        "C50,46 49,40 48,35 " + // hacia la nuca
-        "L51,21 " + // oreja trasera (subida)
-        "L46,27 " + // valle entre orejas
-        "L44,18 " + // oreja delantera
-        "L40,27 " + // frente (bajada)
-        "C36,33 31,40 27,47 " + // frente -> cara
-        "C25,50 25,53 28,53 " + // ceja -> hocico
-        "L26,55 " + // punta del morro
-        "L33,53 " + // boca
-        "C37,56 37,60 41,62 " + // mandíbula
-        "C36,65 34,73 37,80 " + // garganta / pecho
-        "L39,86 Z";
+        "M56,86 " +
+        "C57,74 56,64 54,56 " + // dorso del cuello
+        "C56,52 54,48 52,46 " + // crin (bulto 1)
+        "C55,43 53,39 50,38 " + // crin (bulto 2)
+        "C53,34 50,30 48,30 " + // crin hacia la nuca
+        "L53,15 " + // oreja trasera
+        "L47,25 " + // valle entre orejas
+        "L43,16 " + // oreja delantera
+        "L40,26 " + // frente
+        "C36,31 31,35 28,41 " + // frente -> cara
+        "C24,46 22,52 23,57 " + // cara -> morro
+        "C23,61 28,62 31,59 " + // morro redondeado
+        "C35,61 35,63 39,65 " + // mandíbula
+        "C34,68 32,75 34,82 " + // garganta / pecho
+        "L36,86 Z";
       return (
         <g>
           <path d={head} {...props} />
-          {/* crin escalonada en el dorso */}
+          {/* crin a lo largo del dorso */}
           {!outlineOnly && (
             <path
-              d="M50,24 C53,32 54,42 52,52 M48,30 C50,36 50,44 49,50"
+              d="M49,33 C51,42 51,50 49,54 M45,30 C47,38 47,46 46,51"
               stroke={p.deep}
-              strokeWidth="1.4"
+              strokeWidth="1.5"
               fill="none"
-              opacity="0.5"
+              opacity="0.45"
               strokeLinecap="round"
             />
           )}
           {/* ojo y ollar */}
-          {!outlineOnly && <circle cx="39" cy="34" r="1.9" fill={p.deep} />}
-          {!outlineOnly && <ellipse cx="29" cy="50" rx="1.4" ry="1" fill={p.deep} opacity="0.7" />}
+          {!outlineOnly && <circle cx="40" cy="37" r="2" fill={p.deep} />}
+          {!outlineOnly && <ellipse cx="27" cy="55" rx="1.5" ry="1.1" fill={p.deep} opacity="0.7" />}
         </g>
       );
     }
