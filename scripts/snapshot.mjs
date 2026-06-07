@@ -1,4 +1,4 @@
-// Sirve el build de /dist y recorre el flujo del duelo capturando cada fase.
+// Sirve el build de /dist y recorre el flujo (N jugadores) capturando cada fase.
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
@@ -7,107 +7,102 @@ import { chromium } from "playwright";
 const DIST = new URL("../dist/", import.meta.url).pathname;
 const PORT = 4317;
 const TYPES = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".css": "text/css",
-  ".svg": "image/svg+xml",
-  ".json": "application/json",
-  ".webmanifest": "application/manifest+json",
-  ".png": "image/png",
+  ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
+  ".svg": "image/svg+xml", ".json": "application/json",
+  ".webmanifest": "application/manifest+json", ".png": "image/png",
 };
-
 const server = createServer(async (req, res) => {
   try {
     let p = decodeURIComponent((req.url || "/").split("?")[0]);
     if (p === "/") p = "/index.html";
-    const data = await readFile(join(DIST, normalize(p)));
-    res.writeHead(200, { "content-type": TYPES[extname(join(DIST, p))] || "application/octet-stream" });
-    res.end(data);
-  } catch {
-    res.writeHead(404);
-    res.end("not found");
-  }
+    const f = join(DIST, normalize(p));
+    res.writeHead(200, { "content-type": TYPES[extname(f)] || "application/octet-stream" });
+    res.end(await readFile(f));
+  } catch { res.writeHead(404); res.end("nf"); }
 });
 await new Promise((r) => server.listen(PORT, r));
 
 const browser = await chromium.launch({ args: ["--no-sandbox"] });
 const page = await browser.newPage({ viewport: { width: 412, height: 900 }, deviceScaleFactor: 2 });
-const shot = (name) => page.screenshot({ path: `snapshots/${name}.png` });
-const click = async (re) => {
-  const b = page.getByRole("button", { name: re }).first();
-  await b.click({ force: true });
-};
-// Selecciona una pieza con movimientos legales (que muestre casillas destino).
+const shot = (n) => page.screenshot({ path: `snapshots/${n}.png` });
+const clickRe = async (re) => page.getByRole("button", { name: re }).first().click({ force: true });
+const clickExact = async (t) => page.getByRole("button", { name: t, exact: true }).first().click({ force: true });
 async function selectMovablePiece() {
-  const tiles = page.locator(".tile");
-  const n = await tiles.count();
+  const hits = page.locator(".hit");
+  const n = await hits.count();
   for (let i = 0; i < n; i++) {
-    await tiles.nth(i).click({ force: true });
+    await hits.nth(i).click({ force: true });
     await page.waitForTimeout(120);
-    if (await page.locator(".tile--hi").count()) return true; // tiene destinos
+    if (await page.locator(".tile--hi").count()) return i;
     if (await page.locator(".piece-slot--sel").count()) {
-      await tiles.nth(i).click({ force: true }); // pieza sin movimientos: deseleccionar
-      await page.waitForTimeout(60);
+      await hits.nth(i).click({ force: true });
+      await page.waitForTimeout(50);
     }
   }
-  return false;
+  return -1;
 }
 
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(800);
 await shot("01-home");
 
-await click(/Jugar local/i);
-await page.waitForTimeout(700);
-await shot("02-race");
-
-await click(/Jugador 1/i);
+await clickRe(/Jugar local/i);
 await page.waitForTimeout(500);
-await shot("03-bid");
+await clickExact("3");                       // 3 jugadores
+await page.waitForTimeout(200);
+await shot("02-setup");
 
-await page.getByRole("button", { name: "5", exact: true }).first().click({ force: true });
+await clickRe(/Comenzar/i);
 await page.waitForTimeout(500);
-await shot("04-counter");
+await shot("03-race");
 
-await click(/Paso/i);
-await page.waitForTimeout(500);
-await shot("05-execute");
-
-// Selecciona una pieza para ver destinos resaltados.
-await selectMovablePiece();
+await clickRe(/Lo tengo/i);
 await page.waitForTimeout(400);
-await shot("06-execute-selected");
+await shot("04-pick-bidder");
 
-// Escenario corto para ver el overlay de resultado: apuesta 1, sin contra, 1 mov.
-await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
-await page.waitForTimeout(500);
-await click(/Jugar local/i);
+await page.locator(".pick-btn").first().click({ force: true });
 await page.waitForTimeout(400);
-await click(/Jugador 1/i);
+await shot("05-bid");
+
+await clickExact("3");                        // apuesta 3
+await page.waitForTimeout(400);
+await shot("06-counter");
+
+await clickRe(/lo mejoro/i);                  // rebatir
+await page.waitForTimeout(400);
+await shot("07-pick-challenger");
+
+await page.locator(".pick-btn").first().click({ force: true });
 await page.waitForTimeout(300);
-await page.getByRole("button", { name: "1", exact: true }).first().click({ force: true });
-await page.waitForTimeout(300);
-await click(/Paso/i); // presupuesto = 1
-await page.waitForTimeout(300);
+await clickExact("1");                         // mejora a 1
+await page.waitForTimeout(400);
+await shot("08-counter2");
+
+// Esperar a que expire el temporizador (20s) → ejecución.
+await page.waitForTimeout(21000);
+await shot("09-execute");
+
 await selectMovablePiece();
 await page.waitForTimeout(200);
-const hi = page.locator(".tile--hi").first();
-if (await hi.count()) await hi.click({ force: true });
+const tgt = page.locator(".tile--hi").first();
+if (await tgt.count()) {
+  const box = await tgt.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2); // 1 mov → falla
+}
 await page.waitForTimeout(700);
-await shot("07-result");
+await shot("10-result");
 
-// Pasar a la siguiente ronda: las piezas deben conservarse (continuidad).
-await click(/Siguiente ronda/i);
+await clickRe(/Siguiente ronda/i);
 await page.waitForTimeout(700);
-await shot("08-round2");
+await shot("11-round2");
 
-// Pantalla de ajustes.
+// Ajustes
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
-await page.waitForTimeout(500);
-await click(/Ajustes/i);
-await page.waitForTimeout(500);
-await shot("09-settings");
+await page.waitForTimeout(400);
+await clickRe(/Ajustes/i);
+await page.waitForTimeout(400);
+await shot("12-settings");
 
 await browser.close();
 server.close();
-console.log("OK: capturas 01..07");
+console.log("OK: capturas 01..12");

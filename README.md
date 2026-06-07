@@ -5,18 +5,20 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
 
 > Documento de diseño completo en [`docs/DISENO_DEL_JUEGO.md`](docs/DISENO_DEL_JUEGO.md).
 
-## Cómo se juega (modo local, 2 jugadores)
+## Cómo se juega (modo local, 2–6 jugadores)
 
-1. Se genera una posición inicial y un **objetivo** al azar.
-2. **Carrera:** el primero en reaccionar elige cuántos movimientos cree que
-   necesita para llegar al objetivo.
-3. **Contra-apuesta:** el rival tiene **20 s** para mejorar con un número menor,
-   o pasar.
-4. **Ejecución:** quien tenga la apuesta más baja mueve las piezas (reglas de
-   ajedrez) y puede **rotar/reflejar** el objetivo (cada transformación cuesta
-   1 movimiento). Si llega al objetivo en ≤ su apuesta, gana el punto; si no, el
-   punto es del rival.
-5. Gana quien tenga más puntos tras **10 rondas**.
+1. Al inicio se elige la **cantidad de jugadores** (2–6) y, opcionalmente, sus nombres.
+2. Cada ronda se genera un **objetivo** al azar (las piezas se conservan de la
+   ronda anterior, dando continuidad).
+3. **Carrera:** hay un **único botón** "¡Lo tengo!"; el primero en reaccionar lo
+   pulsa y elige **quién fue**, luego apuesta en cuántos movimientos lo resuelve.
+4. **Rebatir:** durante **20 s**, cualquier otro jugador puede pulsar
+   "¡Yo lo mejoro!", elegir quién fue, y apostar un número menor (se puede
+   encadenar). Quien quede con la apuesta más baja, ejecuta.
+5. **Ejecución:** mueve las piezas (reglas de ajedrez) y puede **rotar/reflejar**
+   el objetivo (cada transformación cuesta 1 movimiento). Si llega al objetivo
+   en ≤ su apuesta, gana el punto; si falla, el punto va a quien le robó el turno.
+6. Gana quien tenga más puntos tras **10 rondas**.
 
 ## Desarrollo
 

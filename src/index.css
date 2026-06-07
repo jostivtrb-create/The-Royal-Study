@@ -121,12 +121,14 @@ body::before {
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
+  pointer-events: none;
   filter: drop-shadow(0 6px 10px rgba(91, 47, 196, 0.18));
-  transition: transform 0.18s ease;
 }
-.tile:active {
-  transform: translateY(1px);
+.hit-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 300;
 }
 
 .tile-top {
@@ -552,6 +554,174 @@ body::before {
   text-align: center;
   padding: 0 16px;
   line-height: 1.5;
+}
+
+/* ---------- Setup de jugadores ---------- */
+.setup {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setup-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+.count-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.count-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-brd);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--violet-deep);
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.count-btn--on {
+  background: linear-gradient(150deg, var(--amethyst), var(--violet-deep));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(91, 47, 196, 0.4);
+  transform: translateY(-2px);
+}
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.name-input {
+  padding: 13px 14px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-brd);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+}
+.name-input:focus {
+  border-color: var(--amethyst);
+  box-shadow: 0 0 0 3px rgba(156, 99, 255, 0.18);
+}
+
+/* ---------- Marcador de N jugadores ---------- */
+.round-chip {
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  color: var(--violet-deep);
+  font-size: 15px;
+}
+.round-chip span { color: var(--ink-soft); font-weight: 600; }
+.scoreboard {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 440px;
+}
+.pscore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  min-width: 72px;
+  border: 2px solid transparent;
+}
+.pscore-name {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pscore-pts {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--violet-deep);
+}
+.pscore--active {
+  border-color: var(--amethyst);
+  box-shadow: 0 0 0 4px rgba(156, 99, 255, 0.18), 0 8px 20px var(--shadow);
+}
+.pscore--lead { border-color: rgba(156, 99, 255, 0.4); }
+
+/* ---------- Botón único grande ---------- */
+.big-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 18px;
+  border: none;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(120deg, var(--violet-deep), var(--amethyst) 60%, #c06bff);
+  box-shadow: 0 12px 26px rgba(91, 47, 196, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.1s ease;
+}
+.big-btn:active { transform: scale(0.98); }
+.big-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------- Selector de jugador ---------- */
+.picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin: 6px 0;
+}
+.pick-btn {
+  padding: 16px 8px;
+  border: 1px solid var(--glass-brd);
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(140deg, var(--amethyst), var(--violet-deep));
+  box-shadow: 0 6px 16px rgba(91, 47, 196, 0.35);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pick-btn:active { transform: scale(0.97); }
+
+/* ---------- Tabla final ---------- */
+.final-scores {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0;
+}
+.final-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(124, 77, 255, 0.1);
+  font-weight: 700;
+  color: var(--ink);
+}
+.final-row:first-child {
+  background: linear-gradient(120deg, rgba(156, 99, 255, 0.25), rgba(195, 107, 255, 0.25));
 }
 
 /* ---------- Leyenda de piezas ---------- */

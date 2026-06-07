@@ -18,8 +18,7 @@ import {
   type Placement,
 } from "../game/engine";
 
-type Phase = "race" | "bid" | "counter" | "execute" | "result" | "gameover";
-type Player = 1 | 2;
+type Phase = "race" | "bid" | "counter" | "counterBid" | "execute" | "result" | "gameover";
 
 const TOTAL_ROUNDS = 10;
 const COUNTER_SECONDS = 20;
@@ -32,35 +31,43 @@ function placementToPositions(p: Placement): Positions {
   return out;
 }
 
-export default function Duel({ onExit }: { onExit: () => void }) {
-  // Posición inicial y primer objetivo (al azar, resoluble).
+export default function Duel({
+  players,
+  onExit,
+}: {
+  players: string[];
+  onExit: () => void;
+}) {
   const [seed] = useState(() => {
     const start = randomPlacement();
     return { start, target: randomTargetFor(start).target };
   });
 
   const [round, setRound] = useState(1);
-  const [scores, setScores] = useState<{ 1: number; 2: number }>({ 1: 0, 2: 0 });
+  const [scores, setScores] = useState<number[]>(() => players.map(() => 0));
   const [positions, setPositions] = useState<Placement>(seed.start);
   const [target, setTarget] = useState<Placement>(seed.target);
 
   const [phase, setPhase] = useState<Phase>("race");
-  const [bidder, setBidder] = useState<Player>(1);
-  const [bid, setBid] = useState<number>(0);
-  const [executor, setExecutor] = useState<Player>(1);
+  const [picking, setPicking] = useState<null | "bidder" | "challenger">(null);
+  const [pendingIdx, setPendingIdx] = useState<number>(0); // quien está eligiendo número
+  const [low, setLow] = useState<{ idx: number; bid: number } | null>(null);
+  const [prevIdx, setPrevIdx] = useState<number | null>(null);
+  const [executorIdx, setExecutorIdx] = useState<number>(0);
   const [budget, setBudget] = useState<number>(0);
   const [used, setUsed] = useState<number>(0);
   const [selected, setSelected] = useState<PieceType | null>(null);
   const [secs, setSecs] = useState(COUNTER_SECONDS);
-  const [roundWinner, setRoundWinner] = useState<Player | null>(null);
+  const [roundWinner, setRoundWinner] = useState<number | null>(null);
+  const [solved, setSolved] = useState(false);
 
-  const opponent: Player = bidder === 1 ? 2 : 1;
+  const nameOf = (i: number) => players[i] ?? `Jugador ${i + 1}`;
 
   // Temporizador de la contra-apuesta.
   useEffect(() => {
     if (phase !== "counter") return;
     if (secs <= 0) {
-      startExecute(bidder, bid);
+      if (low) startExecute(low.idx, low.bid);
       return;
     }
     if (secs <= 5) sfx.tick();
@@ -73,22 +80,24 @@ export default function Duel({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     if (phase !== "execute") return;
     if (equalPlacement(positions, target)) {
-      finishRound(executor);
+      finishRound(executorIdx, true);
     } else if (used >= budget) {
-      finishRound(executor === 1 ? 2 : 1);
+      finishRound(prevIdx, false); // falló: punto a quien le robó el turno (o nadie)
     }
   }, [phase, positions, target, used, budget]);
 
   function resetRoundVars() {
-    setBid(0);
+    setPicking(null);
+    setLow(null);
+    setPrevIdx(null);
     setBudget(0);
     setUsed(0);
     setSelected(null);
     setSecs(COUNTER_SECONDS);
     setRoundWinner(null);
+    setSolved(false);
   }
 
-  // Continuidad: las piezas se quedan donde terminaron; solo cambia el objetivo.
   function nextRound() {
     if (round >= TOTAL_ROUNDS) {
       sfx.win();
@@ -103,56 +112,68 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     resetRoundVars();
   }
 
-  // Revancha: nueva partida desde cero (posición nueva al azar).
   function freshGame() {
     const start = randomPlacement();
     setPositions(start);
     setTarget(randomTargetFor(start).target);
-    setScores({ 1: 0, 2: 0 });
+    setScores(players.map(() => 0));
     setRound(1);
     setPhase("race");
     resetRoundVars();
   }
 
-  function chooseBidder(p: Player) {
+  // Botón único de "reaccionar" → abre el selector de jugador.
+  function openPick(mode: "bidder" | "challenger") {
+    sfx.tap();
+    haptics.light();
+    setPicking(mode);
+  }
+  function pickPlayer(idx: number) {
     sfx.bid();
     haptics.light();
-    setBidder(p);
-    setPhase("bid");
+    setPendingIdx(idx);
+    setPicking(null);
+    setPhase(phase === "race" ? "bid" : "counterBid");
   }
+
   function confirmBid(n: number) {
     sfx.bid();
     haptics.light();
-    setBid(n);
+    setLow({ idx: pendingIdx, bid: n });
+    setPrevIdx(null);
     setSecs(COUNTER_SECONDS);
     setPhase("counter");
   }
-  function startExecute(execPlayer: Player, b: number) {
-    setExecutor(execPlayer);
+  function confirmCounter(n: number) {
+    sfx.bid();
+    haptics.light();
+    setPrevIdx(low ? low.idx : null);
+    setLow({ idx: pendingIdx, bid: n });
+    setSecs(COUNTER_SECONDS);
+    setPhase("counter");
+  }
+
+  function startExecute(idx: number, b: number) {
+    setExecutorIdx(idx);
     setBudget(b);
     setUsed(0);
     setSelected(null);
     setPhase("execute");
   }
-  function counterBid(n: number) {
-    sfx.bid();
-    haptics.light();
-    startExecute(opponent, n);
-  }
-  function counterPass() {
-    sfx.tap();
-    startExecute(bidder, bid);
-  }
-  function finishRound(winner: Player) {
-    if (winner === executor) {
+
+  function finishRound(winnerIdx: number | null, didSolve: boolean) {
+    setSolved(didSolve);
+    if (didSolve) {
       sfx.success();
       haptics.success();
     } else {
       sfx.fail();
       haptics.fail();
     }
-    setRoundWinner(winner);
-    setScores((s) => ({ ...s, [winner]: s[winner] + 1 }));
+    setRoundWinner(winnerIdx);
+    if (winnerIdx != null) {
+      setScores((s) => s.map((v, i) => (i === winnerIdx ? v + 1 : v)));
+    }
     setPhase("result");
   }
 
@@ -197,27 +218,35 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     setSelected(null);
   }
 
+  const eligible = picking === "challenger" && low
+    ? players.map((_, i) => i).filter((i) => i !== low.idx)
+    : players.map((_, i) => i);
+
+  const leader = scores.indexOf(Math.max(...scores));
+
   return (
     <div className="app screen-in">
       <div className="topbar">
         <button className="icon-btn" onClick={onExit} aria-label="Volver">←</button>
-        <div className="title topbar-title"><h1>The Royal Enchanted</h1></div>
+        <div className="round-chip glass">Ronda {round}<span>/{TOTAL_ROUNDS}</span></div>
         <div style={{ width: 40 }} />
       </div>
 
-      <div className="hud">
-        <div className={"score glass" + (executor === 1 && phase === "execute" ? " score--active" : "")}>
-          <div className="who">Jugador 1</div>
-          <div className="pts">{scores[1]}</div>
-        </div>
-        <div className="round glass">
-          <div className="who">Ronda</div>
-          <div className="round-n">{round}<span>/{TOTAL_ROUNDS}</span></div>
-        </div>
-        <div className={"score glass" + (executor === 2 && phase === "execute" ? " score--active" : "")}>
-          <div className="who">Jugador 2</div>
-          <div className="pts">{scores[2]}</div>
-        </div>
+      {/* Marcador de N jugadores */}
+      <div className="scoreboard">
+        {players.map((name, i) => (
+          <div
+            key={i}
+            className={
+              "pscore glass" +
+              (phase === "execute" && i === executorIdx ? " pscore--active" : "") +
+              (low && i === low.idx && (phase === "counter" || phase === "bid") ? " pscore--lead" : "")
+            }
+          >
+            <span className="pscore-name">{name}</span>
+            <span className="pscore-pts">{scores[i]}</span>
+          </div>
+        ))}
       </div>
 
       <div className="target glass">
@@ -237,17 +266,14 @@ export default function Duel({ onExit }: { onExit: () => void }) {
       <div className="panel glass">
         {phase === "race" && (
           <>
-            <div className="panel-q">¿Quién resuelve en menos movimientos? El primero en reaccionar apuesta.</div>
-            <div className="race">
-              <button className="race-btn" onClick={() => chooseBidder(1)}>Jugador 1 ✋</button>
-              <button className="race-btn" onClick={() => chooseBidder(2)}>Jugador 2 ✋</button>
-            </div>
+            <div className="panel-q">¿Quién resuelve el objetivo en menos movimientos?</div>
+            <button className="big-btn" onClick={() => openPick("bidder")}>✋ ¡Lo tengo!</button>
           </>
         )}
 
         {phase === "bid" && (
           <>
-            <div className="panel-q">Jugador {bidder}: ¿en cuántos movimientos lo resuelves?</div>
+            <div className="panel-q">{nameOf(pendingIdx)}: ¿en cuántos movimientos lo resuelves?</div>
             <div className="bid-row">
               {Array.from({ length: MAX_BID }, (_, i) => i + 1).map((n) => (
                 <button key={n} className="chip" onClick={() => confirmBid(n)}>{n}</button>
@@ -256,20 +282,32 @@ export default function Duel({ onExit }: { onExit: () => void }) {
           </>
         )}
 
-        {phase === "counter" && (
+        {phase === "counter" && low && (
           <>
             <div className="panel-q">
-              Jugador {bidder} apostó <strong>{bid}</strong>. Jugador {opponent}: ¿lo mejoras?
+              {nameOf(low.idx)} apostó <strong>{low.bid}</strong>. ¿Alguien lo mejora?
             </div>
             <div className="timer">
               <div className="timer-bar" style={{ width: `${(secs / COUNTER_SECONDS) * 100}%` }} />
               <span className="timer-n">{secs}s</span>
             </div>
+            <button
+              className="big-btn"
+              onClick={() => openPick("challenger")}
+              disabled={low.bid <= 1}
+            >
+              ✋ ¡Yo lo mejoro!
+            </button>
+          </>
+        )}
+
+        {phase === "counterBid" && low && (
+          <>
+            <div className="panel-q">{nameOf(pendingIdx)}: mejora la apuesta (menos de {low.bid})</div>
             <div className="bid-row">
-              {Array.from({ length: bid - 1 }, (_, i) => i + 1).map((n) => (
-                <button key={n} className="chip" onClick={() => counterBid(n)}>{n}</button>
+              {Array.from({ length: low.bid - 1 }, (_, i) => i + 1).map((n) => (
+                <button key={n} className="chip" onClick={() => confirmCounter(n)}>{n}</button>
               ))}
-              <button className="chip chip--pass" onClick={counterPass}>Paso</button>
             </div>
           </>
         )}
@@ -277,7 +315,7 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         {phase === "execute" && (
           <>
             <div className="panel-q">
-              Jugador {executor}: resuélvelo en ≤ {budget}.{" "}
+              {nameOf(executorIdx)}: resuélvelo en ≤ {budget}.{" "}
               <span className={"moves" + (used >= budget ? " moves--danger" : "")}>{used}/{budget}</span>
             </div>
             <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza o transforma el objetivo"}</div>
@@ -292,18 +330,36 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         )}
       </div>
 
-      {phase === "result" && roundWinner != null && (
+      {/* Selector de jugador (botón único → ¿quién fue?) */}
+      {picking && (
+        <div className="overlay" onClick={() => setPicking(null)}>
+          <div className="overlay-card glass screen-in" onClick={(e) => e.stopPropagation()}>
+            <h2>¿Quién fue?</h2>
+            <div className="picker-grid">
+              {eligible.map((i) => (
+                <button key={i} className="pick-btn" onClick={() => pickPlayer(i)}>
+                  {nameOf(i)}
+                </button>
+              ))}
+            </div>
+            <button className="menu-btn" onClick={() => setPicking(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {phase === "result" && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
-            <Confetti count={26} />
-            <div className="overlay-emoji">✨</div>
-            <h2>¡Punto para Jugador {roundWinner}!</h2>
+            {roundWinner != null && <Confetti count={26} />}
+            <div className="overlay-emoji">{roundWinner != null ? "✨" : "🤔"}</div>
+            <h2>
+              {roundWinner != null ? `¡Punto para ${nameOf(roundWinner)}!` : "Nadie gana el punto"}
+            </h2>
             <p>
-              {roundWinner === executor
-                ? `Resolvió el objetivo en ${used} de ${budget} movimientos.`
-                : `El ejecutor no llegó a tiempo (${used}/${budget}).`}
+              {solved
+                ? `${nameOf(executorIdx)} resolvió el objetivo en ${used} de ${budget} movimientos.`
+                : `${nameOf(executorIdx)} no llegó a tiempo (${used}/${budget}).`}
             </p>
-            <div className="overlay-score">J1 {scores[1]} — {scores[2]} J2</div>
             <button className="bid-go" onClick={nextRound}>
               {round >= TOTAL_ROUNDS ? "Ver resultado" : "Siguiente ronda →"}
             </button>
@@ -316,8 +372,18 @@ export default function Duel({ onExit }: { onExit: () => void }) {
           <div className="overlay-card glass screen-in">
             <Confetti count={48} />
             <div className="overlay-emoji">👑</div>
-            <h2>{scores[1] === scores[2] ? "¡Empate!" : `¡Gana Jugador ${scores[1] > scores[2] ? 1 : 2}!`}</h2>
-            <div className="overlay-score big">J1 {scores[1]} — {scores[2]} J2</div>
+            <h2>¡Gana {nameOf(leader)}!</h2>
+            <div className="final-scores">
+              {players
+                .map((name, i) => ({ name, pts: scores[i] }))
+                .sort((a, b) => b.pts - a.pts)
+                .map((p, i) => (
+                  <div key={i} className="final-row">
+                    <span>{i + 1}. {p.name}</span>
+                    <span>{p.pts}</span>
+                  </div>
+                ))}
+            </div>
             <div className="overlay-actions">
               <button className="bid-go" onClick={freshGame}>Revancha</button>
               <button className="menu-btn" onClick={onExit}>Menú</button>

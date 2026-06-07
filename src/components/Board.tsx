@@ -47,12 +47,11 @@ export default function Board({
 
   return (
     <div className="board-stage" style={{ width: CANVAS_W, height: CANVAS_H }}>
-      {/* Casillas (estáticas) */}
+      {/* Casillas (solo visual, sin captura de toque) */}
       {cells.map(({ row, col }) => {
         const { x, y } = tileCenter(row, col);
         return (
-          <button
-            type="button"
+          <div
             key={`t-${row}-${col}`}
             className={
               "tile" +
@@ -66,8 +65,6 @@ export default function Board({
               height: TILE_H + DEPTH,
               zIndex: 10 + (row + col) * 2,
             }}
-            onClick={() => onTileClick?.(row, col)}
-            aria-label={`casilla ${row},${col}`}
           >
             <svg width={TILE_W} height={TILE_H + DEPTH} viewBox={`0 0 ${TILE_W} ${TILE_H + DEPTH}`}>
               <polygon points={`0,${HALF_H} ${HALF_W},${TILE_H} ${HALF_W},${TILE_H + DEPTH} 0,${HALF_H + DEPTH}`} className="tile-side tile-side--l" />
@@ -78,11 +75,11 @@ export default function Board({
                 <polygon points={`${HALF_W},10 ${TILE_W - 22},${HALF_H} ${HALF_W},${TILE_H - 10} 22,${HALF_H}`} className="tile-ring" />
               )}
             </svg>
-          </button>
+          </div>
         );
       })}
 
-      {/* Piezas (capa animada, clave estable por tipo) */}
+      {/* Piezas (capa animada, sin captura de toque) */}
       {PIECE_ORDER.filter((t) => positions[t]).map((t) => {
         const pos = positions[t]!;
         const { x, y } = tileCenter(pos.row, pos.col);
@@ -103,6 +100,29 @@ export default function Board({
           </div>
         );
       })}
+
+      {/* Capa de toque: rombos que coinciden con cada casilla (sin solapes) */}
+      <svg
+        className="hit-layer"
+        width={CANVAS_W}
+        height={CANVAS_H}
+        viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
+      >
+        {cells.map(({ row, col }) => {
+          const { x, y } = tileCenter(row, col);
+          const pts = `${x},${y - HALF_H} ${x + HALF_W},${y} ${x},${y + HALF_H} ${x - HALF_W},${y}`;
+          return (
+            <polygon
+              key={`h-${row}-${col}`}
+              className="hit"
+              points={pts}
+              fill="transparent"
+              style={{ pointerEvents: "all", cursor: "pointer" }}
+              onClick={() => onTileClick?.(row, col)}
+            />
+          );
+        })}
+      </svg>
     </div>
   );
 }
