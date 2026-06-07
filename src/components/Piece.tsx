@@ -3,195 +3,193 @@ import type { PieceType } from "../game/pieces";
 
 type Props = {
   type: PieceType;
-  /** Tonalidad del cristal: amatista (por defecto) o variante para el rival. */
   hue?: "amethyst" | "rose";
   size?: number;
   className?: string;
 };
 
 /**
- * Pieza de cristal arcano dibujada en SVG.
+ * Pieza de ajedrez tallada en cristal.
  *
- * Cada pieza es una gema/cristal facetado (cuerpo en forma de espira) con un
- * ornamento superior distintivo. El facetado (cara izquierda clara + cara
- * derecha oscura + brillo especular) simula volumen 3D sin necesidad de 3D real.
+ * Silueta Staunton reconocible (base torneada + cuerpo + remate distintivo)
+ * con acabado de cristal: degradado vertical, brillo especular lateral, rim
+ * light y glow morado. viewBox 90x112, centro en x=45, base en y≈100.
  */
 export default function Piece({
   type,
   hue = "amethyst",
-  size = 88,
+  size = 96,
   className,
 }: Props) {
   const uid = useId().replace(/:/g, "");
-  const ids = {
-    body: `body-${uid}`,
-    light: `light-${uid}`,
-    dark: `dark-${uid}`,
-    glow: `glow-${uid}`,
-    sheen: `sheen-${uid}`,
-  };
+  const id = (k: string) => `${k}-${uid}`;
 
-  // Paletas de cristal.
-  const palette =
+  const p =
     hue === "rose"
-      ? {
-          edge: "#ffd9f2",
-          light: "#ff9ed8",
-          mid: "#e25fb4",
-          dark: "#a8338a",
-          glow: "#ff7ad1",
-        }
-      : {
-          edge: "#efe2ff",
-          light: "#c9a8ff",
-          mid: "#9c63ff",
-          dark: "#6a32c9",
-          glow: "#b58bff",
-        };
-
-  // Cuerpo: espira de gema simétrica respecto a x=50.
-  const T = "50,34";
-  const RS = "75,64";
-  const RB = "66,114";
-  const BC = "50,122";
-  const LB = "34,114";
-  const LS = "25,64";
+      ? { edge: "#ffe3f5", light: "#ff9fd9", mid: "#e25fb4", dark: "#a8338a", deep: "#7e1f68", glow: "#ff7ad1" }
+      : { edge: "#f1e8ff", light: "#cbb0ff", mid: "#9c63ff", dark: "#6a35cc", deep: "#46219a", glow: "#b58bff" };
 
   return (
     <svg
       className={className}
       width={size}
-      height={size * 1.3}
-      viewBox="0 0 100 130"
+      height={size * (112 / 90)}
+      viewBox="0 0 90 112"
       role="img"
       aria-label={type}
     >
       <defs>
-        <linearGradient id={ids.light} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor={palette.edge} />
-          <stop offset="0.5" stopColor={palette.light} />
-          <stop offset="1" stopColor={palette.mid} />
+        <linearGradient id={id("body")} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={p.edge} />
+          <stop offset="0.16" stopColor={p.light} />
+          <stop offset="0.55" stopColor={p.mid} />
+          <stop offset="1" stopColor={p.dark} />
         </linearGradient>
-        <linearGradient id={ids.dark} x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={palette.mid} />
-          <stop offset="1" stopColor={palette.dark} />
+        <linearGradient id={id("base")} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={p.light} />
+          <stop offset="1" stopColor={p.deep} />
         </linearGradient>
-        <radialGradient id={ids.sheen} cx="0.35" cy="0.25" r="0.7">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.85" />
-          <stop offset="0.4" stopColor="#ffffff" stopOpacity="0.1" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        <linearGradient id={id("spec")} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0.85" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <radialGradient id={id("sheen")} cx="0.36" cy="0.22" r="0.75">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.7" />
+          <stop offset="0.45" stopColor="#fff" stopOpacity="0.08" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <filter id={ids.glow} x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow
-            dx="0"
-            dy="3"
-            stdDeviation="4"
-            floodColor={palette.glow}
-            floodOpacity="0.55"
-          />
+        <filter id={id("glow")} x="-40%" y="-50%" width="180%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3.4" floodColor={p.glow} floodOpacity="0.5" />
         </filter>
+        <clipPath id={id("clip")}>{bodyShape(type, `url(#${id("body")})`, p, true)}</clipPath>
       </defs>
 
-      {/* Sombra de contacto sobre la casilla */}
-      <ellipse cx="50" cy="123" rx="24" ry="6" fill="#000" opacity="0.18" />
+      {/* Sombra de contacto */}
+      <ellipse cx="45" cy="105" rx="30" ry="5.5" fill="#000" opacity="0.16" />
 
-      <g filter={`url(#${ids.glow})`}>
-        {/* Pedestal de la pieza */}
-        <ellipse cx="50" cy="118" rx="21" ry="6.5" fill={palette.dark} />
-        <ellipse cx="50" cy="116" rx="21" ry="6.5" fill={`url(#${ids.light})`} />
+      <g filter={`url(#${id("glow")})`}>
+        {/* Base torneada (común) */}
+        <ellipse cx="45" cy="100" rx="26" ry="6.5" fill={`url(#${id("base")})`} />
+        <ellipse cx="45" cy="97" rx="26" ry="6.5" fill={`url(#${id("body")})`} />
+        <path d="M26,97 Q45,99 64,97 L57,87 Q45,84 33,87 Z" fill={`url(#${id("body")})`} />
+        <ellipse cx="45" cy="86.5" rx="14" ry="3.6" fill={`url(#${id("base")})`} />
 
-        {/* Cuerpo facetado */}
-        <polygon
-          points={`${T} ${RS} ${RB} ${BC} ${LB} ${LS}`}
-          fill={`url(#${ids.light})`}
-        />
-        {/* Cara derecha (sombra) */}
-        <polygon
-          points={`${T} ${RS} ${RB} ${BC}`}
-          fill={`url(#${ids.dark})`}
-          opacity="0.92"
-        />
-        {/* Espina central brillante */}
-        <polygon points={`${T} 53,64 ${BC} 47,64`} fill={palette.edge} opacity="0.5" />
-        {/* Brillo especular izquierdo */}
-        <polygon points="50,38 31,62 38,64 50,42" fill="#fff" opacity="0.55" />
-
-        {/* Ornamento superior por pieza */}
-        {renderTop(type, palette, ids)}
+        {/* Cuerpo + remate de la pieza */}
+        {bodyShape(type, `url(#${id("body")})`, p, false)}
       </g>
 
-      {/* Lustre general */}
-      <ellipse cx="42" cy="62" rx="26" ry="40" fill={`url(#${ids.sheen})`} />
+      {/* Brillo especular y lustre, recortados a la silueta */}
+      <g clipPath={`url(#${id("clip")})`}>
+        <rect x="22" y="10" width="12" height="92" rx="6" fill={`url(#${id("spec")})`} opacity="0.6" />
+        <ellipse cx="38" cy="40" rx="30" ry="44" fill={`url(#${id("sheen")})`} />
+      </g>
     </svg>
   );
 }
 
-function renderTop(
-  type: PieceType,
-  palette: { edge: string; light: string; mid: string; dark: string },
-  ids: { light: string; dark: string },
-) {
-  const lightFill = `url(#${ids.light})`;
+type Pal = { edge: string; light: string; mid: string; dark: string; deep: string; glow: string };
+
+/**
+ * Devuelve el cuerpo (de la base hacia arriba) de cada pieza.
+ * Si `outlineOnly`, devuelve solo las formas rellenas (para el clipPath).
+ */
+function bodyShape(type: PieceType, fill: string, p: Pal, outlineOnly: boolean) {
+  const rim = outlineOnly ? "none" : p.edge;
+  const rimW = 0.8;
+  const props = { fill, stroke: rim, strokeWidth: rimW, strokeLinejoin: "round" as const };
+
   switch (type) {
     case "K":
-      // Orbe coronado por una cruz de cristal.
       return (
         <g>
-          <polygon points="50,30 62,30 50,20 38,30" fill={lightFill} />
-          <circle cx="50" cy="20" r="8" fill={lightFill} stroke={palette.edge} strokeWidth="1" />
-          <rect x="47" y="3" width="6" height="20" rx="2" fill={lightFill} />
-          <rect x="41" y="9" width="18" height="6" rx="2" fill={lightFill} />
-          <circle cx="50" cy="20" r="3" fill="#fff" opacity="0.7" />
+          {/* fuste */}
+          <path d="M37,86 Q33,66 36,52 L54,52 Q57,66 53,86 Z" {...props} />
+          {/* corona/banda */}
+          <path d="M33,53 Q45,47 57,53 L54,44 Q45,41 36,44 Z" {...props} />
+          {/* cabeza */}
+          <ellipse cx="45" cy="40" rx="8.5" ry="6.5" {...props} />
+          {/* cruz */}
+          <path d="M42,14 L48,14 L48,22 L55,22 L55,28 L48,28 L48,38 L42,38 L42,28 L35,28 L35,22 L42,22 Z" {...props} />
         </g>
       );
     case "Q":
-      // Corona radiante de varios picos con orbes.
       return (
         <g>
-          <polygon points="34,34 66,34 60,16 50,26 40,16" fill={lightFill} />
-          {[28, 39, 50, 61, 72].map((x, i) => (
+          <path d="M36,86 Q32,64 36,50 L54,50 Q58,64 54,86 Z" {...props} />
+          {/* collar */}
+          <ellipse cx="45" cy="50" rx="11" ry="3.2" {...props} />
+          {/* banda de la corona */}
+          <path d="M34,50 Q45,45 56,50 L55,43 Q45,40 35,43 Z" {...props} />
+          {/* picos + perlas (corona simétrica) */}
+          {[
+            [35, 40],
+            [40, 37],
+            [45, 33],
+            [50, 37],
+            [55, 40],
+          ].map(([x, tipY], i) => (
             <g key={i}>
-              <polygon
-                points={`${x},28 ${x - 5},${i === 2 ? 6 : 14} ${x + 5},${i === 2 ? 6 : 14}`}
-                fill={lightFill}
-              />
-              <circle cx={x} cy={i === 2 ? 6 : 14} r="3.4" fill={palette.edge} />
+              <path d={`M${x - 3.4},43 L${x + 3.4},43 L${x},${tipY} Z`} {...props} />
+              <circle cx={x} cy={tipY - 1.5} r="2.8" {...props} />
             </g>
           ))}
         </g>
       );
     case "R":
-      // Almenas (torre).
       return (
         <g>
-          <polygon
-            points="34,34 34,20 40,20 40,26 46,26 46,20 54,20 54,26 60,26 60,20 66,20 66,34"
-            fill={lightFill}
+          <path d="M35,86 Q33,68 35,58 L55,58 Q57,68 55,86 Z" {...props} />
+          {/* corona almenada */}
+          <path
+            d="M32,58 L32,42 L38,42 L38,48 L43,48 L43,42 L47,42 L47,48 L52,48 L52,42 L58,42 L58,58 Z"
+            {...props}
           />
-          <polygon points="34,34 34,20 40,20 40,26 50,26 50,34" fill={`url(#${ids.dark})`} opacity="0.3" />
         </g>
       );
     case "B":
-      // Mitra puntiaguda con hendidura y orbe.
       return (
         <g>
-          <polygon points="50,4 38,32 62,32" fill={lightFill} />
-          <polygon points="50,4 50,32 62,32" fill={`url(#${ids.dark})`} opacity="0.45" />
-          <line x1="46" y1="16" x2="54" y2="11" stroke={palette.dark} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="50" cy="6" r="4" fill={palette.edge} />
+          <path d="M37,86 Q33,68 37,56 L53,56 Q57,68 53,86 Z" {...props} />
+          {/* collar */}
+          <ellipse cx="45" cy="55" rx="11" ry="3.4" {...props} />
+          {/* mitra */}
+          <path d="M45,20 C56,30 56,46 45,52 C34,46 34,30 45,20 Z" {...props} />
+          {/* hendidura */}
+          {!outlineOnly && (
+            <path d="M40,30 Q47,26 52,32" stroke={p.deep} strokeWidth="2" fill="none" strokeLinecap="round" />
+          )}
+          {/* perla */}
+          <circle cx="45" cy="18" r="3.6" {...props} />
         </g>
       );
     case "N":
-      // Cabeza de caballo angular y facetada.
       return (
         <g>
-          <polygon
-            points="60,34 62,16 53,5 40,8 33,20 41,22 35,30 44,30 47,34"
-            fill={lightFill}
+          {/* cabeza de caballo (mirando a la izquierda) */}
+          <path
+            d="M54,86
+               C56,72 56,60 54,52
+               C53,44 50,38 44,35
+               C46,30 49,26 48,21
+               L50,15
+               L44,20
+               C42,17 39,17 37,21
+               C33,25 29,33 26,42
+               C25,45 26,47 29,47
+               L35,46
+               C38,50 38,54 42,57
+               C37,60 35,68 37,76
+               L39,86 Z"
+            {...props}
           />
-          <polygon points="60,34 62,16 53,5 50,10 52,34" fill={`url(#${ids.dark})`} opacity="0.5" />
-          <polygon points="40,8 33,20 41,22 44,16" fill="#fff" opacity="0.4" />
-          <circle cx="46" cy="16" r="2" fill={palette.dark} />
+          {/* crin a lo largo del cuello */}
+          {!outlineOnly && (
+            <path d="M50,16 C53,24 54,34 53,44" stroke={p.deep} strokeWidth="1.6" fill="none" opacity="0.55" strokeLinecap="round" />
+          )}
+          {/* ojo y ollar */}
+          {!outlineOnly && <circle cx="39" cy="33" r="1.8" fill={p.deep} />}
+          {!outlineOnly && <circle cx="29" cy="44" r="1.2" fill={p.deep} opacity="0.7" />}
         </g>
       );
   }
