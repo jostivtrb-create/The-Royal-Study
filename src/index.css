@@ -577,7 +577,10 @@ body::before {
 }
 .bid-row {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
+  max-width: 100%;
 }
 .chip {
   width: 46px;
