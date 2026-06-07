@@ -211,7 +211,7 @@ export function minSolution(start: Placement, target: Placement): number {
 
 // ---------- Generador de puzzles ----------
 
-function randomPlacement(): Placement {
+export function randomPlacement(): Placement {
   const squares = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   for (let i = squares.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -220,6 +220,27 @@ function randomPlacement(): Placement {
   const p = {} as Placement;
   PIECE_ORDER.forEach((t, i) => (p[t] = squares[i]));
   return p;
+}
+
+/**
+ * Genera un objetivo aleatorio resoluble a partir de una posición de inicio.
+ * Sin tope de dificultad (puede ser de 1 movimiento o muchos) — solo exige que
+ * sea alcanzable (mínimo finito) y distinto del inicio. Da variedad infinita.
+ */
+export function randomTargetFor(start: Placement): { target: Placement; min: number } {
+  for (let i = 0; i < 600; i++) {
+    const target = randomPlacement();
+    if (equalPlacement(start, target)) continue;
+    const min = minSolution(start, target);
+    if (Number.isFinite(min) && min >= 1) return { target, min };
+  }
+  // Respaldo garantizado: mover una sola pieza a una casilla vacía.
+  const occ = occupiedOf(start);
+  for (const t of PIECE_ORDER) {
+    const dests = legalDestinations(occ, start[t], t);
+    if (dests.length) return { target: { ...start, [t]: dests[0] }, min: 1 };
+  }
+  return { target: start, min: 0 };
 }
 
 export type Puzzle = { start: Placement; target: Placement; min: number };

@@ -5,14 +5,14 @@ import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import {
   applyOp,
   equalPlacement,
-  generatePuzzle,
   legalDestinations,
   occupiedOf,
+  randomPlacement,
+  randomTargetFor,
   rc,
   sq,
   type Op,
   type Placement,
-  type Puzzle,
 } from "../game/engine";
 
 type Phase = "race" | "bid" | "counter" | "execute" | "result" | "gameover";
@@ -30,12 +30,16 @@ function placementToPositions(p: Placement): Positions {
 }
 
 export default function Duel({ onExit }: { onExit: () => void }) {
+  // Posición inicial y primer objetivo (al azar, resoluble).
+  const [seed] = useState(() => {
+    const start = randomPlacement();
+    return { start, target: randomTargetFor(start).target };
+  });
+
   const [round, setRound] = useState(1);
   const [scores, setScores] = useState<{ 1: number; 2: number }>({ 1: 0, 2: 0 });
-
-  const [puzzle, setPuzzle] = useState<Puzzle>(() => generatePuzzle());
-  const [positions, setPositions] = useState<Placement>(puzzle.start);
-  const [target, setTarget] = useState<Placement>(puzzle.target);
+  const [positions, setPositions] = useState<Placement>(seed.start);
+  const [target, setTarget] = useState<Placement>(seed.target);
 
   const [phase, setPhase] = useState<Phase>("race");
   const [bidder, setBidder] = useState<Player>(1);
@@ -53,7 +57,6 @@ export default function Duel({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     if (phase !== "counter") return;
     if (secs <= 0) {
-      // Nadie mejoró: ejecuta el apostador inicial.
       startExecute(bidder, bid);
       return;
     }
@@ -61,23 +64,17 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     return () => clearTimeout(id);
   }, [phase, secs]);
 
-  // Detección de éxito/fracaso durante la ejecución.
+  // Éxito/fracaso durante la ejecución.
   useEffect(() => {
     if (phase !== "execute") return;
     if (equalPlacement(positions, target)) {
-      finishRound(executor); // lo logró
+      finishRound(executor);
     } else if (used >= budget) {
-      finishRound(executor === 1 ? 2 : 1); // se quedó sin movimientos
+      finishRound(executor === 1 ? 2 : 1);
     }
   }, [phase, positions, target, used, budget]);
 
-  function newRound(nextRound: number) {
-    const pz = generatePuzzle();
-    setPuzzle(pz);
-    setPositions(pz.start);
-    setTarget(pz.target);
-    setRound(nextRound);
-    setPhase("race");
+  function resetRoundVars() {
     setBid(0);
     setBudget(0);
     setUsed(0);
@@ -86,17 +83,38 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     setRoundWinner(null);
   }
 
+  // Continuidad: las piezas se quedan donde terminaron; solo cambia el objetivo.
+  function nextRound() {
+    if (round >= TOTAL_ROUNDS) {
+      setPhase("gameover");
+      return;
+    }
+    setTarget(randomTargetFor(positions).target);
+    setRound((r) => r + 1);
+    setPhase("race");
+    resetRoundVars();
+  }
+
+  // Revancha: nueva partida desde cero (posición nueva al azar).
+  function freshGame() {
+    const start = randomPlacement();
+    setPositions(start);
+    setTarget(randomTargetFor(start).target);
+    setScores({ 1: 0, 2: 0 });
+    setRound(1);
+    setPhase("race");
+    resetRoundVars();
+  }
+
   function chooseBidder(p: Player) {
     setBidder(p);
     setPhase("bid");
   }
-
   function confirmBid(n: number) {
     setBid(n);
     setSecs(COUNTER_SECONDS);
     setPhase("counter");
   }
-
   function startExecute(execPlayer: Player, b: number) {
     setExecutor(execPlayer);
     setBudget(b);
@@ -104,26 +122,16 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     setSelected(null);
     setPhase("execute");
   }
-
   function counterBid(n: number) {
-    startExecute(opponent, n); // el oponente mejora y ejecuta
+    startExecute(opponent, n);
   }
   function counterPass() {
     startExecute(bidder, bid);
   }
-
   function finishRound(winner: Player) {
     setRoundWinner(winner);
     setScores((s) => ({ ...s, [winner]: s[winner] + 1 }));
     setPhase("result");
-  }
-
-  function nextRound() {
-    if (round >= TOTAL_ROUNDS) {
-      setPhase("gameover");
-    } else {
-      newRound(round + 1);
-    }
   }
 
   // --- Interacción del tablero (solo en ejecución) ---
@@ -139,13 +147,11 @@ export default function Duel({ onExit }: { onExit: () => void }) {
   function onTileClick(row: number, col: number) {
     if (phase !== "execute") return;
     const clicked = sq(row, col);
-    // ¿Hay una pieza aquí? -> seleccionar / alternar.
     const pieceHere = PIECE_ORDER.find((t) => positions[t] === clicked) ?? null;
     if (pieceHere) {
       setSelected((cur) => (cur === pieceHere ? null : pieceHere));
       return;
     }
-    // Casilla vacía: mover si hay pieza seleccionada y el destino es legal.
     if (!selected) return;
     const occ = occupiedOf(positions);
     if (!legalDestinations(occ, positions[selected], selected).includes(clicked)) {
@@ -163,8 +169,6 @@ export default function Duel({ onExit }: { onExit: () => void }) {
     setSelected(null);
   }
 
-  const matched = phase === "result" || phase === "gameover" ? false : equalPlacement(positions, target);
-
   return (
     <div className="app screen-in">
       <div className="topbar">
@@ -173,7 +177,6 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         <div style={{ width: 40 }} />
       </div>
 
-      {/* Marcador */}
       <div className="hud">
         <div className={"score glass" + (executor === 1 && phase === "execute" ? " score--active" : "")}>
           <div className="who">Jugador 1</div>
@@ -189,13 +192,11 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      {/* Objetivo */}
       <div className="target glass">
         <span className="target-label">Objetivo</span>
         <MiniBoard placement={target} />
       </div>
 
-      {/* Tablero */}
       <div className="board-wrap glass">
         <Board
           positions={placementToPositions(positions)}
@@ -205,7 +206,6 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         />
       </div>
 
-      {/* Panel inferior según la fase */}
       <div className="panel glass">
         {phase === "race" && (
           <>
@@ -250,9 +250,7 @@ export default function Duel({ onExit }: { onExit: () => void }) {
           <>
             <div className="panel-q">
               Jugador {executor}: resuélvelo en ≤ {budget}.{" "}
-              <span className={"moves" + (used >= budget ? " moves--danger" : "")}>
-                {used}/{budget}
-              </span>
+              <span className={"moves" + (used >= budget ? " moves--danger" : "")}>{used}/{budget}</span>
             </div>
             <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza o transforma el objetivo"}</div>
             <div className="ops">
@@ -266,20 +264,17 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         )}
       </div>
 
-      {/* Resultado de ronda */}
       {phase === "result" && roundWinner != null && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
-            <div className="overlay-emoji">{matched ? "✨" : "✨"}</div>
+            <div className="overlay-emoji">✨</div>
             <h2>¡Punto para Jugador {roundWinner}!</h2>
             <p>
               {roundWinner === executor
                 ? `Resolvió el objetivo en ${used} de ${budget} movimientos.`
                 : `El ejecutor no llegó a tiempo (${used}/${budget}).`}
             </p>
-            <div className="overlay-score">
-              J1 {scores[1]} — {scores[2]} J2
-            </div>
+            <div className="overlay-score">J1 {scores[1]} — {scores[2]} J2</div>
             <button className="bid-go" onClick={nextRound}>
               {round >= TOTAL_ROUNDS ? "Ver resultado" : "Siguiente ronda →"}
             </button>
@@ -287,21 +282,14 @@ export default function Duel({ onExit }: { onExit: () => void }) {
         </div>
       )}
 
-      {/* Fin de partida */}
       {phase === "gameover" && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
             <div className="overlay-emoji">👑</div>
-            <h2>
-              {scores[1] === scores[2]
-                ? "¡Empate!"
-                : `¡Gana Jugador ${scores[1] > scores[2] ? 1 : 2}!`}
-            </h2>
+            <h2>{scores[1] === scores[2] ? "¡Empate!" : `¡Gana Jugador ${scores[1] > scores[2] ? 1 : 2}!`}</h2>
             <div className="overlay-score big">J1 {scores[1]} — {scores[2]} J2</div>
             <div className="overlay-actions">
-              <button className="bid-go" onClick={() => { setScores({ 1: 0, 2: 0 }); newRound(1); }}>
-                Revancha
-              </button>
+              <button className="bid-go" onClick={freshGame}>Revancha</button>
               <button className="menu-btn" onClick={onExit}>Menú</button>
             </div>
           </div>

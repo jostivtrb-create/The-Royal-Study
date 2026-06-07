@@ -2,6 +2,8 @@ import {
   minMoves,
   minSolution,
   generatePuzzle,
+  randomPlacement,
+  randomTargetFor,
   legalDestinations,
   occupiedOf,
   applyOp,
@@ -63,6 +65,18 @@ for (let i = 0; i < 30; i++) {
   sumMin += pz.min;
 }
 check("generador: 30 puzzles en rango [2,6] y resolubles", okGen);
+
+// randomTargetFor: siempre resoluble (mínimo finito >= 1) y distinto del inicio,
+// partiendo de cualquier posición (continuidad entre rondas).
+let okTarget = true;
+for (let i = 0; i < 50; i++) {
+  const start = randomPlacement();
+  const { target, min } = randomTargetFor(start);
+  if (!isFinite(min) || min < 1) okTarget = false;
+  if (equalPlacement(start, target)) okTarget = false;
+  if (minSolution(start, target) !== min) okTarget = false;
+}
+check("randomTargetFor: 50 objetivos resolubles y distintos (continuidad)", okTarget);
 
 console.log(`\nResultado: ${pass} pasaron, ${fail} fallaron.`);
 console.log(`Dificultad media de 30 puzzles ~ ${(sumMin / 30).toFixed(2)} movimientos`);

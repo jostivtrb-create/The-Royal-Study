@@ -92,6 +92,11 @@ if (await hi.count()) await hi.click({ force: true });
 await page.waitForTimeout(700);
 await shot("07-result");
 
+// Pasar a la siguiente ronda: las piezas deben conservarse (continuidad).
+await click(/Siguiente ronda/i);
+await page.waitForTimeout(700);
+await shot("08-round2");
+
 await browser.close();
 server.close();
 console.log("OK: capturas 01..07");
