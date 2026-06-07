@@ -295,6 +295,162 @@ body::before {
   opacity: 0.7;
 }
 
+/* ---------- Panel inferior de fases ---------- */
+.panel {
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.panel-q {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.4;
+}
+.panel-q strong { color: var(--violet-deep); }
+.hint {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.moves {
+  font-weight: 800;
+  color: var(--violet-deep);
+}
+.moves--danger { color: #e0457a; }
+
+/* Carrera por apostar primero */
+.race {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.race-btn {
+  flex: 1;
+  padding: 18px 8px;
+  border: 1px solid var(--glass-brd);
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(140deg, var(--amethyst), var(--violet-deep));
+  box-shadow: 0 8px 20px rgba(91, 47, 196, 0.35);
+  transition: transform 0.1s ease;
+}
+.race-btn:active { transform: scale(0.97); }
+
+/* Temporizador de contra-apuesta */
+.timer {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  border-radius: 12px;
+  background: rgba(124, 77, 255, 0.15);
+  overflow: hidden;
+}
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amethyst), #d36bff);
+  transition: width 1s linear;
+}
+.timer-n {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.chip--pass {
+  width: auto;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Botones de transformación */
+.ops {
+  display: flex;
+  gap: 8px;
+}
+.op-btn {
+  width: 48px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-brd);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--violet-deep);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.op-btn:active { transform: translateY(1px); }
+.op-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Jugador activo resaltado */
+.score--active {
+  outline: 2px solid var(--amethyst);
+  box-shadow: 0 0 0 4px rgba(156, 99, 255, 0.18), 0 10px 30px var(--shadow);
+}
+
+/* ---------- Overlay de resultado / fin ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(44, 27, 84, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.25s ease both;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.overlay-card {
+  width: 100%;
+  max-width: 320px;
+  padding: 26px 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.overlay-emoji { font-size: 46px; }
+.overlay-card h2 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--violet-deep);
+}
+.overlay-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+.overlay-score {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.overlay-score.big { font-size: 22px; }
+.overlay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
 /* ---------- Leyenda de piezas ---------- */
 .legend {
   display: flex;

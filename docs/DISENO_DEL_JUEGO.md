@@ -252,14 +252,16 @@ Tentativo actual: *The Royal Enchanted*. Alternativas a considerar:
 
 ## 12. Roadmap (alto nivel, por confirmar)
 
-- **Fase 0:** Fijar rumbo (este documento) ✅ en progreso.
-- **Fase 1:** Motor del juego (tablero 3×3, reglas, generador, BFS, validación).
-- **Fase 2:** UI/estética (isométrico, cristal, piezas SVG, paleta morada).
-- **Fase 3:** Flujo de duelo multijugador (apuestas, timer, puntuación,
-  transformaciones).
-- **Fase 4:** PWA (instalable, offline, manifest, íconos), ajustes (idioma/
-  orientación), háptica y efectos de sonido.
-- **Fase 5:** Pulido (animaciones, partículas, feedback) y pruebas.
+- **Fase 0:** Fijar rumbo (este documento) ✅ hecho.
+- **Fase 1:** Motor del juego (tablero 3×3, reglas, generador, BFS, validación) ✅ hecho (con tests).
+- **Fase 2:** UI/estética (isométrico, cristal, piezas SVG por gema, paleta morada) ✅ hecho.
+- **Fase 3:** Flujo de duelo local (carrera, apuesta, contra-apuesta con timer
+  20s, ejecución con presupuesto, transformaciones, puntuación, rondas, fin) ✅ hecho.
+- **Fase 4 (pendiente):** Multijugador online (Firebase + salas) y despliegue
+  en Vercel.
+- **Fase 5 (pendiente):** PWA pulida (íconos 192/512, offline), pantalla de
+  ajustes (idioma/orientación), háptica y efectos de sonido.
+- **Fase 6 (pendiente):** Pulido final (partículas al ganar, más feedback).
 
 ---
 

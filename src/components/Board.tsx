@@ -8,7 +8,6 @@ type Props = {
   positions: Positions;
   selected?: PieceType | null;
   targets?: Array<[number, number]>;
-  onPieceClick?: (type: PieceType) => void;
   onTileClick?: (row: number, col: number) => void;
 };
 
@@ -37,7 +36,6 @@ export default function Board({
   positions,
   selected,
   targets = [],
-  onPieceClick,
   onTileClick,
 }: Props) {
   const cells: Array<{ row: number; col: number }> = [];
@@ -98,10 +96,7 @@ export default function Board({
               top: y + 12 - PIECE_H,
               width: PIECE_W,
               zIndex: 100 + (pos.row + pos.col) * 2 + (sel ? 50 : 0),
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onPieceClick?.(t);
+              pointerEvents: "none",
             }}
           >
             <Piece type={t} size={PIECE_W} />
