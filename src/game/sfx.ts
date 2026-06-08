@@ -55,6 +55,16 @@ export const sfx = {
   flip: () => {
     tone({ freq: 500, to: 760, dur: 0.1, type: "sine", vol: 0.2 });
   },
+  spin: () => {
+    // "whoosh" de giro del tablero
+    tone({ freq: 280, to: 760, dur: 0.2, type: "sine", vol: 0.18 });
+    tone({ freq: 620, to: 220, dur: 0.26, type: "triangle", vol: 0.12, delay: 0.06 });
+  },
+  spark: () => {
+    // destello cristalino al colocar bien una pieza
+    tone({ freq: 1320, to: 1760, dur: 0.12, type: "sine", vol: 0.16 });
+    tone({ freq: 1980, dur: 0.1, type: "sine", vol: 0.1, delay: 0.04 });
+  },
   tick: () => tone({ freq: 1000, dur: 0.035, type: "square", vol: 0.12 }),
   success: () => {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>

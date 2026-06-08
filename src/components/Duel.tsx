@@ -86,6 +86,8 @@ export default function Duel({
   const [solved, setSolved] = useState<boolean>(init.solved);
   const [confirmExit, setConfirmExit] = useState(false);
   const [spin, setSpin] = useState<{ tick: number; op: Op }>({ tick: 0, op: "rotCW" });
+  const [spark, setSpark] = useState<{ row: number; col: number; tick: number } | null>(null);
+  const [enterTick, setEnterTick] = useState(0);
 
   const nameOf = (i: number) => players[i] ?? `Jugador ${i + 1}`;
 
@@ -146,6 +148,7 @@ export default function Duel({
     setRoundStart({ pos: positions, tgt: nt });
     setRound((r) => r + 1);
     setPhase("race");
+    setEnterTick((t) => t + 1); // anima la entrada del tablero
     resetRoundVars();
   }
 
@@ -158,6 +161,7 @@ export default function Duel({
     setScores(players.map(() => 0));
     setRound(1);
     setPhase("race");
+    setEnterTick((t) => t + 1);
     resetRoundVars();
   }
 
@@ -259,10 +263,16 @@ export default function Duel({
     setPositions((cur) => ({ ...cur, [selected]: clicked }));
     setUsed((u) => u + 1);
     setSelected(null);
+    if (target[selected] === clicked) {
+      // la pieza llegó a su casilla correcta → destello
+      const { row, col } = rc(clicked);
+      setSpark({ row, col, tick: Date.now() });
+      sfx.spark();
+    }
   }
   function doOp(op: Op) {
     if (phase !== "execute") return;
-    sfx.flip();
+    sfx.spin();
     haptics.light();
     setSpin((s) => ({ tick: s.tick + 1, op })); // dispara la animación de giro
     setPositions((p) => applyOp(p, op)); // gira TODO tu tablero como una unidad
@@ -274,7 +284,8 @@ export default function Duel({
     ? players.map((_, i) => i).filter((i) => i !== low.idx)
     : players.map((_, i) => i);
 
-  const leader = scores.indexOf(Math.max(...scores));
+  const maxScore = Math.max(...scores);
+  const leader = scores.indexOf(maxScore);
 
   return (
     <div className="app screen-in">
@@ -286,19 +297,22 @@ export default function Duel({
 
       {/* Marcador de N jugadores */}
       <div className="scoreboard">
-        {players.map((name, i) => (
-          <div
-            key={i}
-            className={
-              "pscore glass" +
-              (phase === "execute" && i === executorIdx ? " pscore--active" : "") +
-              (low && i === low.idx && (phase === "counter" || phase === "bid") ? " pscore--lead" : "")
-            }
-          >
-            <span className="pscore-name">{name}</span>
-            <span className="pscore-pts">{scores[i]}</span>
-          </div>
-        ))}
+        {players.map((name, i) => {
+          const isLeader = scores[i] === maxScore && maxScore > 0;
+          return (
+            <div
+              key={i}
+              className={
+                "pscore glass" +
+                (phase === "execute" && i === executorIdx ? " pscore--active" : "") +
+                (low && i === low.idx && (phase === "counter" || phase === "bid") ? " pscore--lead" : "")
+              }
+            >
+              <span className="pscore-name">{isLeader && <span className="crown">👑</span>}{name}</span>
+              <span className="pscore-pts">{scores[i]}</span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="target glass">
@@ -314,6 +328,8 @@ export default function Duel({
           onTileClick={onTileClick}
           spinTick={spin.tick}
           spinOp={spin.op}
+          spark={spark}
+          enterTick={enterTick}
         />
       </div>
 

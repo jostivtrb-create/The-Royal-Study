@@ -16,6 +16,10 @@ type Props = {
   /** Cambia en cada giro/volteo para reproducir la animación de rotación. */
   spinTick?: number;
   spinOp?: Op;
+  /** Destello cuando una pieza llega a su casilla correcta. */
+  spark?: { row: number; col: number; tick: number } | null;
+  /** Cambia al iniciar una ronda para animar la entrada del tablero. */
+  enterTick?: number;
 };
 
 const HALF_W = 56;
@@ -62,6 +66,8 @@ export default function Board({
   interactive = true,
   spinTick,
   spinOp,
+  spark,
+  enterTick,
 }: Props) {
   const uid = useId().replace(/:/g, "");
   const stageRef = useRef<HTMLDivElement>(null);
@@ -74,6 +80,18 @@ export default function Board({
       easing: "cubic-bezier(.2,.7,.3,1)",
     });
   }, [spinTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Animación de entrada al iniciar una ronda (el tablero "aterriza").
+  useEffect(() => {
+    if (!enterTick || !stageRef.current) return;
+    stageRef.current.animate(
+      [
+        { transform: "translateY(-18px) scale(0.96)", opacity: 0.3 },
+        { transform: "translateY(0) scale(1)", opacity: 1 },
+      ],
+      { duration: 520, easing: "cubic-bezier(.2,1.1,.3,1)" },
+    );
+  }, [enterTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cells: Array<{ row: number; col: number }> = [];
   for (let row = 0; row < 3; row++)
@@ -162,6 +180,16 @@ export default function Board({
           </div>
         );
       })}
+
+      {spark && spark.tick > 0 && (
+        <div
+          key={`spark-${spark.tick}`}
+          className="spark"
+          style={{ left: tileCenter(spark.row, spark.col).x, top: tileCenter(spark.row, spark.col).y - 22 }}
+        >
+          ✦
+        </div>
+      )}
 
       {interactive && (
         <svg className="hit-layer" width={CANVAS_W} height={CANVAS_H} viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}>
