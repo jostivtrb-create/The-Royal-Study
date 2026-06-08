@@ -338,9 +338,6 @@ body::after {
   cursor: pointer;
   filter: drop-shadow(0 8px 10px rgba(91, 47, 196, 0.28));
   animation: floatPiece 4s ease-in-out infinite;
-  transition:
-    left 0.45s cubic-bezier(0.34, 1.18, 0.4, 1),
-    top 0.45s cubic-bezier(0.34, 1.18, 0.4, 1);
 }
 @keyframes floatPiece {
   0%, 100% { transform: translateY(0); }

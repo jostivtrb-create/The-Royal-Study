@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useRef } from "react";
 import Piece from "./Piece";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import type { Op } from "../game/engine";
@@ -47,20 +47,6 @@ function tileCenter(row: number, col: number) {
   };
 }
 
-function spinKeyframes(op?: Op): Keyframe[] {
-  switch (op) {
-    case "rotCCW":
-      return [{ transform: "perspective(760px) rotateY(62deg) scale(0.86)" }, { transform: "perspective(760px) rotateY(0deg) scale(1)" }];
-    case "mirrorH":
-      return [{ transform: "perspective(760px) rotateY(82deg)" }, { transform: "perspective(760px) rotateY(0deg)" }];
-    case "mirrorV":
-      return [{ transform: "perspective(760px) rotateX(74deg)" }, { transform: "perspective(760px) rotateX(0deg)" }];
-    case "rotCW":
-    default:
-      return [{ transform: "perspective(760px) rotateY(-62deg) scale(0.86)" }, { transform: "perspective(760px) rotateY(0deg) scale(1)" }];
-  }
-}
-
 export default function Board({
   positions,
   selected,
@@ -77,15 +63,63 @@ export default function Board({
 }: Props) {
   const uid = useId().replace(/:/g, "");
   const stageRef = useRef<HTMLDivElement>(null);
+  const prevPos = useRef<Record<string, Pos>>({});
+  const prevSpin = useRef(0);
 
-  // Animación de giro del tablero completo.
-  useEffect(() => {
-    if (!spinTick || !stageRef.current) return;
-    stageRef.current.animate(spinKeyframes(spinOp), {
-      duration: 520,
-      easing: "cubic-bezier(.2,.7,.3,1)",
+  // Anima el movimiento de las piezas: giro = órbita alrededor del centro;
+  // espejo = volteo sobre el eje; movimiento normal = deslizamiento.
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const isTransform = !!spinTick && spinTick !== prevSpin.current;
+    const ctr = tileCenter(1, 1);
+    const slots = stage.querySelectorAll<HTMLElement>(".piece-slot[data-piece]");
+
+    slots.forEach((el) => {
+      const t = el.dataset.piece as string;
+      const np = positions[t as PieceType];
+      const op = prevPos.current[t];
+      if (!np || !op) return;
+      if (op.row === np.row && op.col === np.col) return;
+      const oc = tileCenter(op.row, op.col);
+      const nc = tileCenter(np.row, np.col);
+      const dx = oc.x - nc.x, dy = oc.y - nc.y;
+
+      if (isTransform && (spinOp === "rotCW" || spinOp === "rotCCW")) {
+        const v0x = oc.x - ctr.x, v0y = oc.y - ctr.y;
+        const A = (spinOp === "rotCW" ? 1 : -1) * (Math.PI / 2);
+        const N = 8;
+        const frames: Keyframe[] = [];
+        for (let i = 0; i <= N; i++) {
+          const a = A * (i / N);
+          const px = ctr.x + (v0x * Math.cos(a) - v0y * Math.sin(a));
+          const py = ctr.y + (v0x * Math.sin(a) + v0y * Math.cos(a));
+          frames.push({ transform: `translate(${px - nc.x}px, ${py - nc.y}px)` });
+        }
+        frames[N] = { transform: "translate(0px, 0px)" };
+        el.animate(frames, { duration: 600, easing: "cubic-bezier(.45,.05,.2,1)" });
+      } else if (isTransform) {
+        const axis = spinOp === "mirrorH" ? "scaleX" : "scaleY";
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) ${axis}(1)` },
+            { transform: `translate(${dx * 0.5}px, ${dy * 0.5}px) ${axis}(0.05)`, offset: 0.5 },
+            { transform: `translate(0px, 0px) ${axis}(1)` },
+          ],
+          { duration: 560, easing: "cubic-bezier(.4,0,.2,1)" },
+        );
+      } else {
+        el.animate(
+          [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0px, 0px)" }],
+          { duration: 420, easing: "cubic-bezier(.34,1.18,.4,1)" },
+        );
+      }
     });
-  }, [spinTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    prevPos.current = {};
+    for (const k of PIECE_ORDER) if (positions[k]) prevPos.current[k] = positions[k]!;
+    if (spinTick !== undefined) prevSpin.current = spinTick;
+  }, [positions, spinTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Animación de entrada al iniciar una ronda (el tablero "aterriza").
   useEffect(() => {
@@ -183,6 +217,7 @@ export default function Board({
         return (
           <div
             key={`p-${t}`}
+            data-piece={t}
             className={"piece-slot" + (sel ? " piece-slot--sel" : "") + (corr ? " piece-slot--correct" : "")}
             style={{
               left: x - PIECE_W / 2,
