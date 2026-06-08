@@ -19,7 +19,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="app screen-in">
+    <div className="app app--center screen-in">
       <header className="title"><h1>Ajustes</h1></header>
 
       <div className="settings glass">

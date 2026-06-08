@@ -1316,3 +1316,6 @@ body::after {
   }
   .gscene > .board-wrap { align-self: center; }
 }
+
+/* Centrar verticalmente pantallas de menú cortas */
+.app--center { justify-content: center; }

@@ -2,7 +2,7 @@ import { sfx } from "../game/sfx";
 
 export default function Multiplayer({ onLocal }: { onLocal: () => void }) {
   return (
-    <div className="app screen-in">
+    <div className="app app--center screen-in">
       <header className="title">
         <h1>Multiplayer</h1>
         <p>Elige cómo jugar con otros</p>
