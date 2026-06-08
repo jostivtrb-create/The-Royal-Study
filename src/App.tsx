@@ -12,8 +12,9 @@ type Screen = "home" | "setup" | "game" | "solo" | "settings" | "tutorial";
 
 export default function App() {
   const sess = loadSession();
+  const savedScreen = (sess?.screen as Screen) ?? "home";
   const [screen, setScreen] = useState<Screen>(
-    tutorialSeen() ? ((sess?.screen as Screen) ?? "home") : "tutorial",
+    !tutorialSeen() ? "tutorial" : savedScreen === "tutorial" ? "home" : savedScreen,
   );
   const [players, setPlayers] = useState<string[]>(sess?.players ?? ["Jugador 1", "Jugador 2"]);
 
@@ -21,9 +22,9 @@ export default function App() {
     initSettings();
   }, []);
 
-  // Guarda la sesión (pantalla + jugadores) para sobrevivir recargas.
+  // Guarda la sesión (no persiste el tutorial como pantalla restaurable).
   useEffect(() => {
-    saveSession({ screen, players });
+    if (screen !== "tutorial") saveSession({ screen, players });
   }, [screen, players]);
 
   // Navegación con el botón "atrás" del navegador (no cierra la app).
