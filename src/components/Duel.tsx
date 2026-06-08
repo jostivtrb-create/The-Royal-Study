@@ -4,6 +4,7 @@ import Confetti from "./Confetti";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
+import { loadGame, saveGame } from "../game/persist";
 import {
   applyOp,
   equalPlacement,
@@ -37,35 +38,64 @@ export default function Duel({
   players: string[];
   onExit: () => void;
 }) {
-  const [seed] = useState(() => {
+  // Estado inicial: partida guardada (si existe y coincide) o una nueva.
+  const init = useMemo(() => {
+    const g = loadGame();
+    if (g && Array.isArray(g.scores) && g.scores.length === players.length) return g;
     const start = randomPlacement();
-    return { start, target: randomTargetFor(start).target };
-  });
+    const target = randomTargetFor(start).target;
+    return {
+      round: 1,
+      scores: players.map(() => 0),
+      positions: start,
+      target,
+      roundStart: { pos: start, tgt: target },
+      phase: "race",
+      picking: null,
+      pendingIdx: 0,
+      low: null,
+      firstBid: null,
+      attemptKind: "original",
+      executorIdx: 0,
+      budget: 0,
+      used: 0,
+      selected: null,
+      secs: COUNTER_SECONDS,
+      solved: false,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const [round, setRound] = useState(1);
-  const [scores, setScores] = useState<number[]>(() => players.map(() => 0));
-  const [positions, setPositions] = useState<Placement>(seed.start);
-  const [target, setTarget] = useState<Placement>(seed.target);
-  // Estado inicial de la ronda (para reiniciar el puzzle si el que rebate falla).
-  const [roundStart, setRoundStart] = useState<{ pos: Placement; tgt: Placement }>({
-    pos: seed.start,
-    tgt: seed.target,
-  });
+  const [round, setRound] = useState<number>(init.round);
+  const [scores, setScores] = useState<number[]>(init.scores);
+  const [positions, setPositions] = useState<Placement>(init.positions);
+  const [target, setTarget] = useState<Placement>(init.target);
+  const [roundStart, setRoundStart] = useState<{ pos: Placement; tgt: Placement }>(init.roundStart);
 
-  const [phase, setPhase] = useState<Phase>("race");
-  const [picking, setPicking] = useState<null | "bidder" | "challenger">(null);
-  const [pendingIdx, setPendingIdx] = useState<number>(0); // quien está eligiendo número
-  const [low, setLow] = useState<{ idx: number; bid: number } | null>(null);
-  const [firstBid, setFirstBid] = useState<{ idx: number; bid: number } | null>(null);
-  const [attemptKind, setAttemptKind] = useState<"rebutter" | "original">("original");
-  const [executorIdx, setExecutorIdx] = useState<number>(0);
-  const [budget, setBudget] = useState<number>(0);
-  const [used, setUsed] = useState<number>(0);
-  const [selected, setSelected] = useState<PieceType | null>(null);
-  const [secs, setSecs] = useState(COUNTER_SECONDS);
-  const [solved, setSolved] = useState(false);
+  const [phase, setPhase] = useState<Phase>(init.phase);
+  const [picking, setPicking] = useState<null | "bidder" | "challenger">(init.picking);
+  const [pendingIdx, setPendingIdx] = useState<number>(init.pendingIdx);
+  const [low, setLow] = useState<{ idx: number; bid: number } | null>(init.low);
+  const [firstBid, setFirstBid] = useState<{ idx: number; bid: number } | null>(init.firstBid);
+  const [attemptKind, setAttemptKind] = useState<"rebutter" | "original">(init.attemptKind);
+  const [executorIdx, setExecutorIdx] = useState<number>(init.executorIdx);
+  const [budget, setBudget] = useState<number>(init.budget);
+  const [used, setUsed] = useState<number>(init.used);
+  const [selected, setSelected] = useState<PieceType | null>(init.selected);
+  const [secs, setSecs] = useState<number>(init.secs);
+  const [solved, setSolved] = useState<boolean>(init.solved);
+  const [confirmExit, setConfirmExit] = useState(false);
 
   const nameOf = (i: number) => players[i] ?? `Jugador ${i + 1}`;
+
+  // Guarda la partida en cada cambio (resiste recargas).
+  useEffect(() => {
+    saveGame({
+      round, scores, positions, target, roundStart, phase, picking, pendingIdx,
+      low, firstBid, attemptKind, executorIdx, budget, used, selected, secs, solved,
+    });
+  }, [round, scores, positions, target, roundStart, phase, picking, pendingIdx,
+      low, firstBid, attemptKind, executorIdx, budget, used, selected, secs, solved]);
 
   // Temporizador de la contra-apuesta (se pausa mientras se elige jugador).
   useEffect(() => {
@@ -247,7 +277,9 @@ export default function Duel({
   return (
     <div className="app screen-in">
       <div className="gamebar">
+        <button className="exit-btn glass" onClick={() => setConfirmExit(true)} aria-label="Salir de la partida">✕</button>
         <div className="round-chip glass">Ronda {round}<span>/{TOTAL_ROUNDS}</span></div>
+        <span style={{ width: 36 }} />
       </div>
 
       {/* Marcador de N jugadores */}
@@ -347,6 +379,21 @@ export default function Duel({
           </>
         )}
       </div>
+
+      {/* Confirmar salida de la partida */}
+      {confirmExit && (
+        <div className="overlay" onClick={() => setConfirmExit(false)}>
+          <div className="overlay-card glass screen-in" onClick={(e) => e.stopPropagation()}>
+            <div className="overlay-emoji">🚪</div>
+            <h2>¿Salir de la partida?</h2>
+            <p>Se perderá el progreso de esta partida.</p>
+            <div className="overlay-actions">
+              <button className="bid-go" onClick={() => { setConfirmExit(false); onExit(); }}>Salir</button>
+              <button className="menu-btn" onClick={() => setConfirmExit(false)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Selector de jugador (botón único → ¿quién fue?) */}
       {picking && (

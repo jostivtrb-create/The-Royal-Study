@@ -626,9 +626,22 @@ body::before {
 /* ---------- Marcador de N jugadores ---------- */
 .gamebar {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
+  max-width: 440px;
 }
+.exit-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-brd);
+  color: var(--violet-deep);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.exit-btn:active { transform: translateY(1px); }
 .round-chip {
   padding: 8px 16px;
   border-radius: 14px;

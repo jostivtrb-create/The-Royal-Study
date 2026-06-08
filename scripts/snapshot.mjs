@@ -92,7 +92,8 @@ await clickRe(/Continuar/i);                   // reinicia puzzle → ejecuta el
 await page.waitForTimeout(600);
 await shot("09-handoff-execute");
 
-// Ajustes
+// Ajustes (limpiar almacenamiento para volver a Home)
+await page.evaluate(() => localStorage.clear());
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await clickRe(/Ajustes/i);
@@ -100,6 +101,7 @@ await page.waitForTimeout(400);
 await shot("10-settings");
 
 // Navegación: home → setup → atrás (no debe salir, vuelve a home).
+await page.evaluate(() => localStorage.clear());
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await clickRe(/Jugar local/i);
