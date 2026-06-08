@@ -387,8 +387,7 @@ export default function Duel({
 
         {phase === "execute" && (
           <>
-            <div className="panel-q">{nameOf(executorIdx)}, te toca · ≤ {budget} movimientos</div>
-            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza o gira el tablero"}</div>
+            <div className="panel-q">{nameOf(executorIdx)} · tu turno</div>
             <div className="ops">
               {OPS.map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)} disabled={used >= budget}>

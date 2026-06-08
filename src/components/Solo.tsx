@@ -271,8 +271,6 @@ export default function Solo({ onExit }: { onExit: () => void }) {
       <div className="panel glass">
         {phase === "solving" && (
           <>
-            <div className="panel-q">Iguala el objetivo en los menos movimientos posibles</div>
-            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza, o gira/voltea tu tablero"}</div>
             <div className="ops">
               {(["rotCW", "rotCCW", "mirrorH", "mirrorV"] as Op[]).map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)}><OpIcon op={op} /></button>
