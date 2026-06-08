@@ -268,7 +268,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
         />
       </div>
 
-      <div className="panel glass">
+      <div className="controls">
         {phase === "solving" && (
           <>
             <div className="ops">

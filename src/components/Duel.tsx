@@ -358,7 +358,7 @@ export default function Duel({
         />
       </div>
 
-      <div className="panel glass">
+      <div className="controls">
         {phase === "race" && (
           <>
             <div className="panel-q">¿Quién resuelve el objetivo en menos movimientos?</div>

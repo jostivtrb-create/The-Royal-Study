@@ -1234,3 +1234,19 @@ body::after {
   font-weight: 800;
 }
 .stars-chip b { color: var(--ink); }
+
+/* ---------- Controles inferiores sin burbuja, alineados al tablero ---------- */
+.controls {
+  width: 364px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.controls .ops {
+  width: 100%;
+  justify-content: space-between;
+  gap: 0;
+}
+.controls .race { width: 100%; }
