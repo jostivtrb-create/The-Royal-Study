@@ -6,10 +6,8 @@ const MAX = 6;
 
 export default function Setup({
   onStart,
-  onBack,
 }: {
   onStart: (names: string[]) => void;
-  onBack: () => void;
 }) {
   const [count, setCount] = useState(2);
   const [names, setNames] = useState<string[]>(["", ""]);
@@ -38,11 +36,7 @@ export default function Setup({
 
   return (
     <div className="app screen-in">
-      <div className="topbar">
-        <button className="icon-btn" onClick={onBack} aria-label="Volver">←</button>
-        <div className="title topbar-title"><h1>Jugar local</h1></div>
-        <div style={{ width: 40 }} />
-      </div>
+      <header className="title"><h1>Jugar local</h1></header>
 
       <div className="setup glass">
         <div className="setup-label">¿Cuántos jugadores?</div>

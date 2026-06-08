@@ -16,9 +16,17 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
    en pulsar "¡Yo lo mejoro!"): elige quién fue y apuesta un número menor; ese
    jugador pasa a ejecutar. Sin cadena. Si nadie rebate, ejecuta el que apostó.
 5. **Ejecución:** mueve las piezas (reglas de ajedrez) y puede **rotar/reflejar**
-   el objetivo (cada transformación cuesta 1 movimiento). Si llega al objetivo
-   en ≤ su apuesta, **gana 1 punto**; si falla, **pierde 1 punto** (solo él).
+   el objetivo (cada transformación cuesta 1 movimiento).
+   - Si llega al objetivo en ≤ su apuesta → **gana 1 punto** (fin de la ronda).
+   - Si **el que rebatió falla** → pierde 1 punto, **se reinicia el puzzle** y le
+     toca al que apostó primero, con el número que él había puesto. Si ese
+     también falla, pierde 1 punto y termina la ronda.
+   - Si nadie rebatió y el apostador falla → pierde 1 punto.
+   - Los puntos pueden ser negativos.
 6. Gana quien tenga más puntos tras **10 rondas**.
+
+> Navegación: usa el botón **atrás** del navegador/celular para volver entre
+> pantallas (no cierra la app).
 
 ## Desarrollo
 

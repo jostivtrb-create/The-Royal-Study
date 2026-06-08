@@ -2,7 +2,7 @@ import { useSettings, type Orientation } from "../game/settings";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
 
-export default function Settings({ onBack }: { onBack: () => void }) {
+export default function Settings() {
   const [s, set] = useSettings();
 
   const toggleSound = () => {
@@ -20,11 +20,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="app screen-in">
-      <div className="topbar">
-        <button className="icon-btn" onClick={onBack} aria-label="Volver">←</button>
-        <div className="title topbar-title"><h1>Ajustes</h1></div>
-        <div style={{ width: 40 }} />
-      </div>
+      <header className="title"><h1>Ajustes</h1></header>
 
       <div className="settings glass">
         <Row label="Sonido" desc="Efectos suaves del juego">

@@ -18,7 +18,7 @@ import {
   type Placement,
 } from "../game/engine";
 
-type Phase = "race" | "bid" | "counter" | "counterBid" | "execute" | "result" | "gameover";
+type Phase = "race" | "bid" | "counter" | "counterBid" | "execute" | "handoff" | "result" | "gameover";
 
 const TOTAL_ROUNDS = 10;
 const COUNTER_SECONDS = 20;
@@ -47,11 +47,18 @@ export default function Duel({
   const [scores, setScores] = useState<number[]>(() => players.map(() => 0));
   const [positions, setPositions] = useState<Placement>(seed.start);
   const [target, setTarget] = useState<Placement>(seed.target);
+  // Estado inicial de la ronda (para reiniciar el puzzle si el que rebate falla).
+  const [roundStart, setRoundStart] = useState<{ pos: Placement; tgt: Placement }>({
+    pos: seed.start,
+    tgt: seed.target,
+  });
 
   const [phase, setPhase] = useState<Phase>("race");
   const [picking, setPicking] = useState<null | "bidder" | "challenger">(null);
   const [pendingIdx, setPendingIdx] = useState<number>(0); // quien está eligiendo número
   const [low, setLow] = useState<{ idx: number; bid: number } | null>(null);
+  const [firstBid, setFirstBid] = useState<{ idx: number; bid: number } | null>(null);
+  const [attemptKind, setAttemptKind] = useState<"rebutter" | "original">("original");
   const [executorIdx, setExecutorIdx] = useState<number>(0);
   const [budget, setBudget] = useState<number>(0);
   const [used, setUsed] = useState<number>(0);
@@ -65,7 +72,7 @@ export default function Duel({
   useEffect(() => {
     if (phase !== "counter" || picking) return;
     if (secs <= 0) {
-      if (low) startExecute(low.idx, low.bid);
+      if (low) startExecute(low.idx, low.bid, "original"); // nadie rebatió → ejecuta el que apostó
       return;
     }
     if (secs <= 5) sfx.tick();
@@ -87,6 +94,8 @@ export default function Duel({
   function resetRoundVars() {
     setPicking(null);
     setLow(null);
+    setFirstBid(null);
+    setAttemptKind("original");
     setBudget(0);
     setUsed(0);
     setSelected(null);
@@ -102,7 +111,9 @@ export default function Duel({
       return;
     }
     sfx.tap();
-    setTarget(randomTargetFor(positions).target);
+    const nt = randomTargetFor(positions).target;
+    setTarget(nt);
+    setRoundStart({ pos: positions, tgt: nt });
     setRound((r) => r + 1);
     setPhase("race");
     resetRoundVars();
@@ -110,8 +121,10 @@ export default function Duel({
 
   function freshGame() {
     const start = randomPlacement();
+    const nt = randomTargetFor(start).target;
     setPositions(start);
-    setTarget(randomTargetFor(start).target);
+    setTarget(nt);
+    setRoundStart({ pos: start, tgt: nt });
     setScores(players.map(() => 0));
     setRound(1);
     setPhase("race");
@@ -135,6 +148,7 @@ export default function Duel({
   function confirmBid(n: number) {
     sfx.bid();
     haptics.light();
+    setFirstBid({ idx: pendingIdx, bid: n });
     setLow({ idx: pendingIdx, bid: n });
     setSecs(COUNTER_SECONDS);
     setPhase("counter");
@@ -142,29 +156,46 @@ export default function Duel({
   function confirmCounter(n: number) {
     sfx.bid();
     haptics.light();
-    startExecute(pendingIdx, n); // un solo rebatir: el retador ejecuta directamente
+    startExecute(pendingIdx, n, "rebutter"); // un solo rebatir: el retador ejecuta
   }
 
-  function startExecute(idx: number, b: number) {
+  function startExecute(idx: number, b: number, kind: "rebutter" | "original") {
     setExecutorIdx(idx);
     setBudget(b);
     setUsed(0);
     setSelected(null);
+    setAttemptKind(kind);
     setPhase("execute");
   }
 
   function finishRound(didSolve: boolean) {
-    setSolved(didSolve);
     if (didSolve) {
+      setSolved(true);
       sfx.success();
       haptics.success();
       setScores((s) => s.map((v, i) => (i === executorIdx ? v + 1 : v)));
-    } else {
-      sfx.fail();
-      haptics.fail();
-      setScores((s) => s.map((v, i) => (i === executorIdx ? v - 1 : v))); // pierde 1 (permite negativos)
+      setPhase("result");
+      return;
     }
-    setPhase("result");
+    // Falló: pierde 1 punto (permite negativos).
+    sfx.fail();
+    haptics.fail();
+    setScores((s) => s.map((v, i) => (i === executorIdx ? v - 1 : v)));
+    if (attemptKind === "rebutter" && firstBid) {
+      setPhase("handoff"); // se reinicia el puzzle y le toca al que apostó primero
+    } else {
+      setSolved(false);
+      setPhase("result");
+    }
+  }
+
+  // Reinicia el puzzle y pasa el turno al apostador original con su número.
+  function continueHandoff() {
+    if (!firstBid) return;
+    sfx.tap();
+    setPositions(roundStart.pos);
+    setTarget(roundStart.tgt);
+    startExecute(firstBid.idx, firstBid.bid, "original");
   }
 
   // --- Interacción del tablero (solo en ejecución) ---
@@ -216,10 +247,8 @@ export default function Duel({
 
   return (
     <div className="app screen-in">
-      <div className="topbar">
-        <button className="icon-btn" onClick={onExit} aria-label="Volver">←</button>
+      <div className="gamebar">
         <div className="round-chip glass">Ronda {round}<span>/{TOTAL_ROUNDS}</span></div>
-        <div style={{ width: 40 }} />
       </div>
 
       {/* Marcador de N jugadores */}
@@ -333,6 +362,20 @@ export default function Duel({
               ))}
             </div>
             <button className="menu-btn" onClick={() => setPicking(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {phase === "handoff" && firstBid && (
+        <div className="overlay">
+          <div className="overlay-card glass screen-in">
+            <div className="overlay-emoji">🔄</div>
+            <h2>{nameOf(executorIdx)} falló (−1)</h2>
+            <p>
+              Se reinicia el puzzle. Le toca a <strong>{nameOf(firstBid.idx)}</strong>:
+              resuélvelo en {firstBid.bid} movimientos.
+            </p>
+            <button className="bid-go" onClick={continueHandoff}>Continuar →</button>
           </div>
         </div>
       )}

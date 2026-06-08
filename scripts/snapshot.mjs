@@ -75,30 +75,40 @@ await shot("07-pick-challenger");
 await page.locator(".pick-btn").first().click({ force: true });
 await page.waitForTimeout(300);
 await clickExact("1");                         // mejora a 1 → ejecuta directamente
-await page.waitForTimeout(500);
-await shot("08-execute");
+await page.waitForTimeout(400);
 
+// El que rebate falla (1 mov, budget 1) → handoff al apostador original.
 await selectMovablePiece();
 await page.waitForTimeout(200);
 const tgt = page.locator(".tile--hi").first();
 if (await tgt.count()) {
   const box = await tgt.boundingBox();
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2); // 1 mov → falla
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 await page.waitForTimeout(700);
-await shot("09-result");
+await shot("08-handoff");
 
-await clickRe(/Siguiente ronda/i);
-await page.waitForTimeout(700);
-await shot("10-round2");
+await clickRe(/Continuar/i);                   // reinicia puzzle → ejecuta el original
+await page.waitForTimeout(600);
+await shot("09-handoff-execute");
 
 // Ajustes
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await clickRe(/Ajustes/i);
 await page.waitForTimeout(400);
-await shot("11-settings");
+await shot("10-settings");
+
+// Navegación: home → setup → atrás (no debe salir, vuelve a home).
+await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await clickRe(/Jugar local/i);
+await page.waitForTimeout(400);
+await page.goBack();
+await page.waitForTimeout(400);
+const backHome = await page.getByRole("button", { name: /Jugar local/i }).count();
+console.log("atrás vuelve a Home:", backHome > 0 ? "SÍ" : "NO");
 
 await browser.close();
 server.close();
-console.log("OK: capturas 01..11");
+console.log("OK: capturas 01..10");

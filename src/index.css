@@ -617,6 +617,11 @@ body::before {
 }
 
 /* ---------- Marcador de N jugadores ---------- */
+.gamebar {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
 .round-chip {
   padding: 8px 16px;
   border-radius: 14px;
