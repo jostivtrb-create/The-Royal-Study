@@ -31,6 +31,15 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
 > Navegación: usa el botón **atrás** del navegador/celular para volver entre
 > pantallas (no cierra la app).
 
+## Modo infinito (1 jugador)
+
+Puzzles aleatorios sin fin. Mueve libremente (los giros/volteos cuentan como
+movimiento) hasta igualar el objetivo; puedes **Reintentar** o **Rendirse**.
+Al igualarlo eliges **Confirmar** o intentarlo en menos. Si lo resolviste en el
+**mínimo posible** ganas una **⭐** (se acumulan y se guardan); si no, la app te
+dice en cuántos se podía y **reproduce la solución óptima** animada. El motor
+calcula el camino más corto exacto con BFS (instantáneo).
+
 ## Desarrollo
 
 ```bash

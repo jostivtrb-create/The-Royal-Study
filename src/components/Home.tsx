@@ -2,11 +2,12 @@ import Piece from "./Piece";
 
 type Props = {
   onPlayLocal: () => void;
+  onSolo?: () => void;
   onPlayOnline?: () => void;
   onSettings?: () => void;
 };
 
-export default function Home({ onPlayLocal, onPlayOnline, onSettings }: Props) {
+export default function Home({ onPlayLocal, onSolo, onPlayOnline, onSettings }: Props) {
   return (
     <div className="app home screen-in">
       {/* Emblema: corona de gemas flotantes */}
@@ -38,6 +39,9 @@ export default function Home({ onPlayLocal, onPlayOnline, onSettings }: Props) {
       <nav className="menu">
         <button className="menu-btn menu-btn--primary" onClick={onPlayLocal}>
           <span className="menu-ic">✦</span> Jugar local
+        </button>
+        <button className="menu-btn" onClick={onSolo}>
+          <span className="menu-ic">♾️</span> Modo infinito
         </button>
         <button className="menu-btn" onClick={onPlayOnline}>
           <span className="menu-ic">⚡</span> Jugar en línea

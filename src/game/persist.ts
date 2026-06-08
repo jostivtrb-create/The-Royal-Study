@@ -21,8 +21,24 @@ function write(key: string, value: unknown) {
   }
 }
 
+function remove(key: string) {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* no-op */
+  }
+}
+
 export const loadSession = () => read<Session>(SESSION);
 export const saveSession = (s: Session) => write(SESSION, s);
+
+// Modo infinito (solitario): estrellas y puzzle en curso.
+export const loadStars = () => read<number>("tre-stars") ?? 0;
+export const saveStars = (n: number) => write("tre-stars", n);
+export const loadSolo = () => read<any>("tre-solo");
+export const saveSolo = (s: unknown) => write("tre-solo", s);
+export const clearSolo = () => remove("tre-solo");
 
 // El estado de la partida se guarda/lee como objeto genérico.
 export const loadGame = () => read<any>(GAME);

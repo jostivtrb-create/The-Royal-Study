@@ -8,6 +8,7 @@ import {
   occupiedOf,
   applyOp,
   equalPlacement,
+  solve,
   sq,
   type Placement,
 } from "../src/game/engine";
@@ -77,6 +78,24 @@ for (let i = 0; i < 50; i++) {
   if (minSolution(start, target) !== min) okTarget = false;
 }
 check("randomTargetFor: 50 objetivos resolubles y distintos (continuidad)", okTarget);
+
+// solve(): el camino lleva al objetivo y su longitud coincide con minSolution.
+let okSolve = true;
+for (let i = 0; i < 40; i++) {
+  const start = randomPlacement();
+  const { target } = randomTargetFor(start);
+  const { min, path } = solve(start, target);
+  if (min !== minSolution(start, target)) okSolve = false;
+  if (path.length !== min) okSolve = false;
+  // Reproducir el camino debe llegar al objetivo.
+  let cur: Placement = { ...start };
+  for (const a of path) {
+    if (a.kind === "move") cur = { ...cur, [a.piece]: a.to };
+    else cur = applyOp(cur, a.op);
+  }
+  if (!equalPlacement(cur, target)) okSolve = false;
+}
+check("solve(): camino válido y mínimo coincide con minSolution (40 casos)", okSolve);
 
 console.log(`\nResultado: ${pass} pasaron, ${fail} fallaron.`);
 console.log(`Dificultad media de 30 puzzles ~ ${(sumMin / 30).toFixed(2)} movimientos`);

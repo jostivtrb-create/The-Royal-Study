@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import Home from "./components/Home";
 import Setup from "./components/Setup";
 import Duel from "./components/Duel";
+import Solo from "./components/Solo";
 import Settings from "./components/Settings";
 import { initSettings } from "./game/settings";
 import { loadSession, saveSession, clearGame } from "./game/persist";
 
-type Screen = "home" | "setup" | "game" | "settings";
+type Screen = "home" | "setup" | "game" | "solo" | "settings";
 
 export default function App() {
   const sess = loadSession();
@@ -37,6 +38,7 @@ export default function App() {
     setScreen(to);
     history.pushState({ screen: to }, "");
   };
+  const back = () => history.back();
 
   // Salir de la partida: limpia el guardado y vuelve al inicio.
   const exitGame = () => {
@@ -55,6 +57,13 @@ export default function App() {
       />
     );
   if (screen === "game") return <Duel players={players} onExit={exitGame} />;
+  if (screen === "solo") return <Solo onExit={back} />;
   if (screen === "settings") return <Settings />;
-  return <Home onPlayLocal={() => go("setup")} onSettings={() => go("settings")} />;
+  return (
+    <Home
+      onPlayLocal={() => go("setup")}
+      onSolo={() => go("solo")}
+      onSettings={() => go("settings")}
+    />
+  );
 }

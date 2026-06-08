@@ -209,6 +209,73 @@ export function minSolution(start: Placement, target: Placement): number {
   return best;
 }
 
+// ---------- Solucionador con camino (para mostrar la solución óptima) ----------
+
+const ALL_OPS: Op[] = ["rotCW", "rotCCW", "mirrorH", "mirrorV"];
+
+export type Action =
+  | { kind: "move"; piece: PieceType; from: Sq; to: Sq }
+  | { kind: "op"; op: Op };
+
+/**
+ * Encuentra una secuencia óptima de acciones (mover una pieza o girar/voltear el
+ * tablero, cada una cuesta 1) para pasar de `start` a `target`. BFS con rastro.
+ */
+export function solve(start: Placement, target: Placement): { min: number; path: Action[] } {
+  const startKey = serialize(start);
+  const targetKey = serialize(target);
+  if (startKey === targetKey) return { min: 0, path: [] };
+
+  const prev = new Map<string, { from: string; action: Action }>();
+  const visited = new Set<string>([startKey]);
+  let frontier: Placement[] = [start];
+  let depth = 0;
+
+  const finish = (): { min: number; path: Action[] } => {
+    const path: Action[] = [];
+    let key = targetKey;
+    while (key !== startKey) {
+      const e = prev.get(key)!;
+      path.push(e.action);
+      key = e.from;
+    }
+    path.reverse();
+    return { min: path.length, path };
+  };
+
+  while (frontier.length) {
+    depth++;
+    const next: Placement[] = [];
+    for (const state of frontier) {
+      const stateKey = serialize(state);
+      const occ = occupiedOf(state);
+      for (const t of PIECE_ORDER) {
+        for (const dest of legalDestinations(occ, state[t], t)) {
+          const ns = { ...state, [t]: dest };
+          const key = serialize(ns);
+          if (visited.has(key)) continue;
+          visited.add(key);
+          prev.set(key, { from: stateKey, action: { kind: "move", piece: t, from: state[t], to: dest } });
+          if (key === targetKey) return finish();
+          next.push(ns);
+        }
+      }
+      for (const op of ALL_OPS) {
+        const ns = applyOp(state, op);
+        const key = serialize(ns);
+        if (visited.has(key)) continue;
+        visited.add(key);
+        prev.set(key, { from: stateKey, action: { kind: "op", op } });
+        if (key === targetKey) return finish();
+        next.push(ns);
+      }
+    }
+    frontier = next;
+    if (depth > 16) break;
+  }
+  return { min: Infinity, path: [] };
+}
+
 // ---------- Generador de puzzles ----------
 
 export function randomPlacement(): Placement {
