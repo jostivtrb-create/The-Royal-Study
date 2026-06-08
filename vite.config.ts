@@ -15,7 +15,8 @@ export default defineConfig({
         description: "Duelo de puzzles de ajedrez místico",
         theme_color: "#7c4dff",
         background_color: "#f3eeff",
-        display: "standalone",
+        display: "fullscreen",
+        display_override: ["fullscreen", "standalone"],
         orientation: "any",
         lang: "es",
         icons: [
