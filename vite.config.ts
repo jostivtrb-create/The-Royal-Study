@@ -17,7 +17,6 @@ export default defineConfig({
         background_color: "#f3eeff",
         display: "fullscreen",
         display_override: ["fullscreen", "standalone"],
-        orientation: "any",
         lang: "es",
         icons: [
           {

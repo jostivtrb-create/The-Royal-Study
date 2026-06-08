@@ -186,11 +186,11 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     if (isPerfect) {
       sfx.win();
       haptics.win();
-      setStars((s) => s + 3); // ganar = +3 estrellas
+      setStars((s) => s + (revealed ? 2 : 3)); // ganar: +3, o +2 si canjeaste el mínimo
     } else {
       sfx.fail();
       haptics.fail();
-      setStars((s) => Math.max(0, s - 1)); // no óptimo = −1
+      setStars((s) => Math.max(0, s - (revealed ? 2 : 1))); // no óptimo: −1, o −2 si canjeaste
     }
     setPhase("result");
   }
@@ -200,17 +200,16 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     haptics.fail();
     setPerfect(false);
     setGaveUp(true);
-    setStars((s) => Math.max(0, s - 1)); // rendirse = −1
+    setStars((s) => Math.max(0, s - (revealed ? 2 : 1))); // rendirse: −1, o −2 si canjeaste
     setPhase("result");
   }
 
-  // Canjear el mínimo: lo revela durante la partida y cuesta 1 estrella.
+  // Canjear el mínimo: lo revela; su coste (−1) se descuenta del resultado final.
   function revealMin() {
     if (revealed || phase !== "solving") return;
     sfx.tap();
     haptics.light();
     setRevealed(true);
-    setStars((s) => Math.max(0, s - 1));
   }
 
   function showSolution() {
@@ -339,7 +338,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
           <div className="overlay-card glass screen-in">
             {perfect && <Confetti count={40} />}
             <div className="overlay-emoji">{perfect ? "🌟" : "💔"}</div>
-            <h2>{perfect ? "¡Perfecto! +3 ⭐" : "−1 ⭐"}</h2>
+            <h2>{perfect ? `¡Perfecto! +${revealed ? 2 : 3} ⭐` : `−${revealed ? 2 : 1} ⭐`}</h2>
             <p>
               {perfect
                 ? `Lo resolviste en el mínimo (${puzzle.min}). Tienes ${stars} ⭐`
