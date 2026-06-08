@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
-import Piece from "./Piece";
 import Confetti from "./Confetti";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
@@ -270,7 +269,7 @@ export default function Duel({
 
       <div className="target glass">
         <span className="target-label">Objetivo</span>
-        <MiniBoard placement={target} />
+        <Board positions={placementToPositions(target)} interactive={false} scale={0.44} />
       </div>
 
       <div className="board-wrap glass">
@@ -430,21 +429,4 @@ export default function Duel({
 
 function opLabel(op: Op) {
   return { rotCW: "⟳", rotCCW: "⟲", mirrorH: "⇄", mirrorV: "⇅" }[op];
-}
-
-function MiniBoard({ placement }: { placement: Placement }) {
-  const grid: Array<PieceType | null> = Array(9).fill(null);
-  for (const t of PIECE_ORDER) grid[placement[t]] = t;
-  return (
-    <div className="mini">
-      {grid.map((cell, i) => {
-        const r = Math.floor(i / 3), c = i % 3;
-        return (
-          <div key={i} className={"mini-cell" + ((r + c) % 2 ? " mini-cell--b" : "")}>
-            {cell && <Piece type={cell} size={30} />}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
