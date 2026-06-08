@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Confetti from "./Confetti";
-import { PIECE_ORDER, type PieceType } from "../game/pieces";
+import { PIECE_ORDER, PIECE_NAME_ES, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
 import { loadStars, saveStars, loadSolo, saveSolo, clearSolo } from "../game/persist";
@@ -63,7 +63,9 @@ export default function Solo({ onExit }: { onExit: () => void }) {
   const [enterTick, setEnterTick] = useState(0);
   const [perfect, setPerfect] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
-  const [solIdx, setSolIdx] = useState(0);
+  // Solución paso a paso.
+  const [solStates, setSolStates] = useState<Placement[]>([]);
+  const [solStep, setSolStep] = useState(0);
 
   // Persistencia.
   useEffect(() => {
@@ -76,25 +78,6 @@ export default function Solo({ onExit }: { onExit: () => void }) {
       clearSolo();
     }
   }, [phase, positions, used, puzzle]);
-
-  // Reproducción de la solución óptima.
-  useEffect(() => {
-    if (phase !== "solution") return;
-    if (solIdx >= puzzle.path.length) return;
-    const id = setTimeout(() => {
-      const a = puzzle.path[solIdx];
-      if (a.kind === "move") {
-        sfx.move();
-        setPositions((p) => ({ ...p, [a.piece]: a.to }));
-      } else {
-        sfx.spin();
-        setSpin((s) => ({ tick: s.tick + 1, op: a.op }));
-        setPositions((p) => applyOp(p, a.op));
-      }
-      setSolIdx((i) => i + 1);
-    }, 800);
-    return () => clearTimeout(id);
-  }, [phase, solIdx, puzzle]);
 
   const targets = useMemo(() => {
     if (phase !== "solving" || !selected) return [] as Array<[number, number]>;
@@ -115,7 +98,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     setSelected(null);
     setPerfect(false);
     setGaveUp(false);
-    setSolIdx(0);
+    setSolStep(0);
     setEnterTick((t) => t + 1);
   }
 
@@ -201,10 +184,41 @@ export default function Solo({ onExit }: { onExit: () => void }) {
 
   function showSolution() {
     sfx.tap();
+    // Construye los estados del camino óptimo para recorrerlos paso a paso.
+    const states: Placement[] = [puzzle.start];
+    let cur: Placement = puzzle.start;
+    for (const a of puzzle.path) {
+      cur = a.kind === "move" ? { ...cur, [a.piece]: a.to } : applyOp(cur, a.op);
+      states.push(cur);
+    }
+    setSolStates(states);
+    setSolStep(0);
     setPositions(puzzle.start);
-    setSolIdx(0);
     setSelected(null);
     setPhase("solution");
+  }
+
+  function solGo(to: number) {
+    const t = Math.max(0, Math.min(puzzle.min, to));
+    if (t === solStep || !solStates[t]) return;
+    const action = puzzle.path[Math.max(solStep, t) - 1];
+    if (action && action.kind === "op") {
+      sfx.spin();
+      setSpin((s) => ({ tick: s.tick + 1, op: action.op }));
+    } else {
+      sfx.move();
+    }
+    haptics.light();
+    setPositions(solStates[t]);
+    setSolStep(t);
+  }
+
+  function solStepLabel() {
+    if (solStep === 0) return "Posición inicial";
+    const a = puzzle.path[solStep - 1];
+    return a.kind === "move"
+      ? `Mover ${PIECE_NAME_ES[a.piece]}`
+      : `Transformar ${opLabel(a.op)}`;
   }
 
   return (
@@ -252,8 +266,13 @@ export default function Solo({ onExit }: { onExit: () => void }) {
         )}
         {phase === "solution" && (
           <>
-            <div className="panel-q">Solución óptima: {puzzle.min} movimientos</div>
-            <button className="bid-go" onClick={nextPuzzle}>Siguiente →</button>
+            <div className="panel-q">Solución óptima · Paso {solStep}/{puzzle.min}</div>
+            <div className="hint">{solStepLabel()}</div>
+            <div className="race">
+              <button className="race-btn race-btn--soft" onClick={() => solGo(solStep - 1)} disabled={solStep === 0}>← Anterior</button>
+              <button className="race-btn" onClick={() => solGo(solStep + 1)} disabled={solStep >= puzzle.min}>Siguiente paso →</button>
+            </div>
+            <button className="bid-go" onClick={nextPuzzle}>Siguiente puzzle →</button>
           </>
         )}
       </div>

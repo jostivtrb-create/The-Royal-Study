@@ -51,8 +51,10 @@ Puzzles aleatorios sin fin. Mueve libremente (los giros/volteos cuentan como
 movimiento) hasta igualar el objetivo; puedes **Reintentar** o **Rendirse**.
 Al igualarlo eliges **Confirmar** o intentarlo en menos. Si lo resolviste en el
 **mínimo posible** ganas una **⭐** (se acumulan y se guardan); si no, la app te
-dice en cuántos se podía y **reproduce la solución óptima** animada. El motor
-calcula el camino más corto exacto con BFS (instantáneo).
+dice en cuántos se podía y puedes ver la **solución óptima paso a paso**
+(avanzar/retroceder a tu ritmo, o salir cuando quieras). El motor calcula el
+camino más corto exacto con BFS (instantáneo). El puzzle en curso y las
+estrellas se **guardan**: si sales y vuelves, continúas donde quedaste.
 
 ## Desarrollo
 
