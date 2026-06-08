@@ -48,10 +48,11 @@ export default function Solo({ onExit }: { onExit: () => void }) {
         puzzle: { start: saved.start, target: saved.target, min, path },
         positions: saved.positions ?? saved.start,
         used: saved.used ?? 0,
+        revealed: saved.revealed ?? false,
       };
     }
     const pz = makePuzzle();
-    return { puzzle: pz, positions: pz.start, used: 0 };
+    return { puzzle: pz, positions: pz.start, used: 0, revealed: false };
   }, []);
 
   const [stars, setStars] = useState<number>(() => loadStars());
@@ -67,6 +68,8 @@ export default function Solo({ onExit }: { onExit: () => void }) {
   const [enterTick, setEnterTick] = useState(0);
   const [perfect, setPerfect] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
+  const [revealed, setRevealed] = useState<boolean>(init.revealed);
+  const [puzzleId, setPuzzleId] = useState(0); // para animar la transición de puzzle
   // Solución paso a paso.
   const [solStates, setSolStates] = useState<Placement[]>([]);
   const [solStep, setSolStep] = useState(0);
@@ -77,11 +80,11 @@ export default function Solo({ onExit }: { onExit: () => void }) {
   }, [stars]);
   useEffect(() => {
     if (phase === "solving" || phase === "reached") {
-      saveSolo({ start: puzzle.start, target: puzzle.target, positions, used });
+      saveSolo({ start: puzzle.start, target: puzzle.target, positions, used, revealed });
     } else {
       clearSolo();
     }
-  }, [phase, positions, used, puzzle]);
+  }, [phase, positions, used, puzzle, revealed]);
 
   const correct = useMemo(() => {
     const out: Array<[number, number]> = [];
@@ -112,8 +115,10 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     setSelected(null);
     setPerfect(false);
     setGaveUp(false);
+    setRevealed(false);
     setSolStep(0);
     setEnterTick((t) => t + 1);
+    setPuzzleId((p) => p + 1);
   }
 
   function retry() {
@@ -181,19 +186,31 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     if (isPerfect) {
       sfx.win();
       haptics.win();
-      setStars((s) => s + 1);
+      setStars((s) => s + 3); // ganar = +3 estrellas
     } else {
       sfx.fail();
       haptics.fail();
+      setStars((s) => Math.max(0, s - 1)); // no óptimo = −1
     }
     setPhase("result");
   }
 
   function giveUp() {
     sfx.fail();
+    haptics.fail();
     setPerfect(false);
     setGaveUp(true);
+    setStars((s) => Math.max(0, s - 1)); // rendirse = −1
     setPhase("result");
+  }
+
+  // Canjear el mínimo: lo revela durante la partida y cuesta 1 estrella.
+  function revealMin() {
+    if (revealed || phase !== "solving") return;
+    sfx.tap();
+    haptics.light();
+    setRevealed(true);
+    setStars((s) => Math.max(0, s - 1));
   }
 
   function showSolution() {
@@ -247,7 +264,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      <div className="target glass">
+      <div className="target glass card-in" key={puzzleId}>
         <span className="target-label">Objetivo</span>
         <Board positions={placementToPositions(puzzle.target)} interactive={false} scale={0.44} />
       </div>
@@ -271,6 +288,11 @@ export default function Solo({ onExit }: { onExit: () => void }) {
       <div className="controls">
         {phase === "solving" && (
           <>
+            {revealed ? (
+              <div className="min-tag">Mínimo posible: <b>{puzzle.min}</b></div>
+            ) : (
+              <button className="reveal-btn" onClick={revealMin}>🔓 Ver el mínimo · cuesta 1 ⭐</button>
+            )}
             <div className="ops">
               {(["rotCW", "rotCCW", "mirrorH", "mirrorV"] as Op[]).map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)}><OpIcon op={op} /></button>
@@ -313,15 +335,15 @@ export default function Solo({ onExit }: { onExit: () => void }) {
       {phase === "result" && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
-            {perfect && <Confetti count={34} />}
-            <div className="overlay-emoji">{perfect ? "🌟" : "🔎"}</div>
-            <h2>{perfect ? "¡Perfecto! +1 estrella" : "Casi…"}</h2>
+            {perfect && <Confetti count={40} />}
+            <div className="overlay-emoji">{perfect ? "🌟" : "💔"}</div>
+            <h2>{perfect ? "¡Perfecto! +3 ⭐" : "−1 ⭐"}</h2>
             <p>
               {perfect
-                ? `Lo resolviste en el mínimo (${puzzle.min}). Total: ${stars} ⭐`
+                ? `Lo resolviste en el mínimo (${puzzle.min}). Tienes ${stars} ⭐`
                 : gaveUp
-                  ? `La solución óptima es de ${puzzle.min} movimientos.`
-                  : `Lo hiciste en ${used}, pero se podía en ${puzzle.min}.`}
+                  ? `Te rendiste. La solución óptima es de ${puzzle.min}.`
+                  : `Lo hiciste en ${used}, se podía en ${puzzle.min}.`}
             </p>
             <div className="overlay-actions">
               {!perfect && <button className="bid-go" onClick={showSolution}>Ver solución</button>}
