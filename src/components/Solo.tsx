@@ -40,7 +40,8 @@ function makePuzzle(): { start: Placement; target: Placement; min: number; path:
 export default function Solo({ onExit }: { onExit: () => void }) {
   const init = useMemo(() => {
     const saved = loadSolo();
-    if (saved && saved.start && saved.target) {
+    // Descarta guardados con el caballo atascado en el centro (bug antiguo).
+    if (saved && saved.start && saved.target && saved.start.N !== 4 && saved.target.N !== 4) {
       const { min, path } = solve(saved.start, saved.target);
       return {
         puzzle: { start: saved.start, target: saved.target, min, path },

@@ -43,6 +43,11 @@ export default function App() {
     setScreen(to);
     history.pushState({ screen: to }, "");
   };
+  // Reemplaza la entrada actual (para no dejar el tutorial en el historial).
+  const goReplace = (to: Screen) => {
+    setScreen(to);
+    history.replaceState({ screen: to }, "");
+  };
   const back = () => history.back();
 
   const exitGame = () => {
@@ -69,7 +74,7 @@ export default function App() {
       <Tutorial
         onClose={() => {
           markTutorialSeen();
-          go(afterTut.current);
+          goReplace(afterTut.current); // reemplaza el tutorial: al salir no vuelve a él
         }}
       />
     );

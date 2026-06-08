@@ -43,7 +43,11 @@ export default function Duel({
   // Estado inicial: partida guardada (si existe y coincide) o una nueva.
   const init = useMemo(() => {
     const g = loadGame();
-    if (g && Array.isArray(g.scores) && g.scores.length === players.length) return g;
+    if (
+      g && Array.isArray(g.scores) && g.scores.length === players.length &&
+      g.positions?.N !== 4 && g.roundStart?.pos?.N !== 4
+    )
+      return g;
     const start = randomPlacement();
     const target = randomTargetFor(start).target;
     return {

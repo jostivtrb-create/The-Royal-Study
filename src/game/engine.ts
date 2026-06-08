@@ -296,14 +296,19 @@ export function solve(start: Placement, target: Placement): { min: number; path:
 
 // ---------- Generador de puzzles ----------
 
+const CENTER: Sq = 4; // (1,1): el caballo nunca puede entrar/salir de aquí en 3x3
+
 export function randomPlacement(): Placement {
   const squares = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  for (let i = squares.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [squares[i], squares[j]] = [squares[j], squares[i]];
-  }
-  const p = {} as Placement;
-  PIECE_ORDER.forEach((t, i) => (p[t] = squares[i]));
+  let p: Placement;
+  do {
+    for (let i = squares.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [squares[i], squares[j]] = [squares[j], squares[i]];
+    }
+    p = {} as Placement;
+    PIECE_ORDER.forEach((t, i) => (p[t] = squares[i]));
+  } while (p.N === CENTER); // el caballo nunca empieza en el centro (quedaría atascado)
   return p;
 }
 
@@ -315,6 +320,7 @@ export function randomPlacement(): Placement {
 export function randomTargetFor(start: Placement): { target: Placement; min: number } {
   for (let i = 0; i < 600; i++) {
     const target = randomPlacement();
+    if (target.N === CENTER) continue; // el caballo no puede llegar al centro
     if (equalPlacement(start, target)) continue;
     const min = minSolution(start, target);
     if (Number.isFinite(min) && min >= 1) return { target, min };
