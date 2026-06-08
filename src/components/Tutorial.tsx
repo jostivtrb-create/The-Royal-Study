@@ -95,6 +95,12 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
     }
   }
 
+  const tutCorrect = (tg: Placement): Array<[number, number]> =>
+    PIECE_ORDER.filter((t) => demo[t] === tg[t]).map((t) => {
+      const { row, col } = rc(demo[t]);
+      return [row, col];
+    });
+
   const moveTargets: Array<[number, number]> =
     step === 2 && selected
       ? legalDestinations(occupiedOf(demo), demo[selected], selected).map((s) => {
@@ -142,7 +148,7 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
           <div className="tut-block">
             <h2 className="tut-h">👆 Mover piezas</h2>
             <div className="target glass"><span className="target-label">Objetivo</span><Board positions={toPos(MOVE_TARGET)} interactive={false} scale={0.4} /></div>
-            <Board positions={toPos(demo)} selected={selected} targets={moveTargets} onTileClick={moveStepClick} spark={spark} />
+            <Board positions={toPos(demo)} selected={selected} targets={moveTargets} correct={tutCorrect(MOVE_TARGET)} onTileClick={moveStepClick} spark={spark} />
             <p className={"tut-lead" + (done ? " tut-ok" : hint ? " tut-warn" : "")}>
               {done
                 ? "¡Bien! Cada movimiento que haces cuenta. 🌟"
@@ -155,7 +161,7 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
           <div className="tut-block">
             <h2 className="tut-h">🔄 Girar y reflejar</h2>
             <div className="target glass"><span className="target-label">Objetivo</span><Board positions={toPos(ROT_TARGET)} interactive={false} scale={0.4} /></div>
-            <Board positions={toPos(demo)} selected={selected} onTileClick={rotStepClick} spinTick={spin.tick} spinOp={spin.op} />
+            <Board positions={toPos(demo)} selected={selected} correct={tutCorrect(ROT_TARGET)} onTileClick={rotStepClick} spinTick={spin.tick} spinOp={spin.op} />
             <p className={"tut-lead" + (done ? " tut-ok" : hint ? " tut-warn" : "")}>
               {done
                 ? "¡Genial! Giraste TODO el tablero de una. A veces es más rápido que mover pieza por pieza. 🎉"

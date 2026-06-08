@@ -12,6 +12,8 @@ type Props = {
   targets?: Array<[number, number]>;
   /** Casillas al alcance pero bloqueadas por otra ficha (se marcan en rojo). */
   blocked?: Array<[number, number]>;
+  /** Casillas con una pieza ya en su lugar correcto (brillan en dorado). */
+  correct?: Array<[number, number]>;
   onTileClick?: (row: number, col: number) => void;
   scale?: number;
   interactive?: boolean;
@@ -64,6 +66,7 @@ export default function Board({
   selected,
   targets = [],
   blocked = [],
+  correct = [],
   onTileClick,
   scale = 1,
   interactive = true,
@@ -104,6 +107,8 @@ export default function Board({
     targets.some(([tr, tc]) => tr === r && tc === c);
   const isBlocked = (r: number, c: number) =>
     blocked.some(([br, bc]) => br === r && bc === c);
+  const correctKey = new Set(correct.map(([r, c]) => `${r},${c}`));
+  const isCorrect = (r: number, c: number) => correctKey.has(`${r},${c}`);
   const selPos = selected ? positions[selected] : null;
   const isSel = (r: number, c: number) => !!selPos && selPos.row === r && selPos.col === c;
 
@@ -123,6 +128,7 @@ export default function Board({
             className={
               "tile" +
               ((row + col) % 2 === 0 ? " tile--a" : " tile--b") +
+              (isCorrect(row, col) ? " tile--correct" : "") +
               (isTarget(row, col) ? " tile--hi" : "") +
               (isBlocked(row, col) ? " tile--block" : "") +
               (isSel(row, col) ? " tile--sel" : "")
@@ -173,10 +179,11 @@ export default function Board({
         const pos = positions[t]!;
         const { x, y } = tileCenter(pos.row, pos.col);
         const sel = selected === t;
+        const corr = isCorrect(pos.row, pos.col);
         return (
           <div
             key={`p-${t}`}
-            className={"piece-slot" + (sel ? " piece-slot--sel" : "")}
+            className={"piece-slot" + (sel ? " piece-slot--sel" : "") + (corr ? " piece-slot--correct" : "")}
             style={{
               left: x - PIECE_W / 2,
               top: y + 12 - PIECE_H,

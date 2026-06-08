@@ -235,6 +235,14 @@ export default function Duel({
   }
 
   // --- Interacción del tablero (solo en ejecución) ---
+  // Casillas con una pieza ya en su lugar correcto (brillan en dorado).
+  const correct = useMemo(() => {
+    const out: Array<[number, number]> = [];
+    for (const t of PIECE_ORDER)
+      if (positions[t] === target[t]) { const { row, col } = rc(positions[t]); out.push([row, col]); }
+    return out;
+  }, [positions, target]);
+
   const marks = useMemo(() => {
     const empty = { free: [] as Array<[number, number]>, blocked: [] as Array<[number, number]> };
     if (phase !== "execute" || !selected) return empty;
@@ -328,6 +336,7 @@ export default function Duel({
           selected={selected}
           targets={marks.free}
           blocked={marks.blocked}
+          correct={correct}
           onTileClick={onTileClick}
           spinTick={spin.tick}
           spinOp={spin.op}
