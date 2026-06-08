@@ -13,6 +13,7 @@ import {
   randomPlacement,
   randomTargetFor,
   rc,
+  reachable,
   sq,
   type Op,
   type Placement,
@@ -233,13 +234,13 @@ export default function Duel({
   }
 
   // --- Interacción del tablero (solo en ejecución) ---
-  const targets = useMemo(() => {
-    if (phase !== "execute" || !selected) return [] as Array<[number, number]>;
-    const occ = occupiedOf(positions);
-    return legalDestinations(occ, positions[selected], selected).map((s) => {
-      const { row, col } = rc(s);
-      return [row, col] as [number, number];
-    });
+  const marks = useMemo(() => {
+    const empty = { free: [] as Array<[number, number]>, blocked: [] as Array<[number, number]> };
+    if (phase !== "execute" || !selected) return empty;
+    const { free, blocked } = reachable(occupiedOf(positions), positions[selected], selected);
+    const toRC = (arr: number[]) =>
+      arr.map((s) => { const { row, col } = rc(s); return [row, col] as [number, number]; });
+    return { free: toRC(free), blocked: toRC(blocked) };
   }, [phase, selected, positions]);
 
   function onTileClick(row: number, col: number) {
@@ -324,7 +325,8 @@ export default function Duel({
         <Board
           positions={placementToPositions(positions)}
           selected={selected}
-          targets={targets}
+          targets={marks.free}
+          blocked={marks.blocked}
           onTileClick={onTileClick}
           spinTick={spin.tick}
           spinOp={spin.op}

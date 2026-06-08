@@ -10,6 +10,8 @@ type Props = {
   positions: Positions;
   selected?: PieceType | null;
   targets?: Array<[number, number]>;
+  /** Casillas al alcance pero bloqueadas por otra ficha (se marcan en rojo). */
+  blocked?: Array<[number, number]>;
   onTileClick?: (row: number, col: number) => void;
   scale?: number;
   interactive?: boolean;
@@ -61,6 +63,7 @@ export default function Board({
   positions,
   selected,
   targets = [],
+  blocked = [],
   onTileClick,
   scale = 1,
   interactive = true,
@@ -99,6 +102,8 @@ export default function Board({
 
   const isTarget = (r: number, c: number) =>
     targets.some(([tr, tc]) => tr === r && tc === c);
+  const isBlocked = (r: number, c: number) =>
+    blocked.some(([br, bc]) => br === r && bc === c);
   const selPos = selected ? positions[selected] : null;
   const isSel = (r: number, c: number) => !!selPos && selPos.row === r && selPos.col === c;
 
@@ -119,6 +124,7 @@ export default function Board({
               "tile" +
               ((row + col) % 2 === 0 ? " tile--a" : " tile--b") +
               (isTarget(row, col) ? " tile--hi" : "") +
+              (isBlocked(row, col) ? " tile--block" : "") +
               (isSel(row, col) ? " tile--sel" : "")
             }
             style={{
@@ -139,6 +145,9 @@ export default function Board({
               )}
               {isTarget(row, col) && (
                 <polygon points={`${HALF_W},10 ${TILE_W - 22},${HALF_H} ${HALF_W},${TILE_H - 10} 22,${HALF_H}`} className="tile-ring" />
+              )}
+              {isBlocked(row, col) && (
+                <polygon points={`${HALF_W},10 ${TILE_W - 22},${HALF_H} ${HALF_W},${TILE_H - 10} 22,${HALF_H}`} className="tile-ring tile-ring--block" />
               )}
               {isSel(row, col) && (
                 <polygon points={`${HALF_W},10 ${TILE_W - 22},${HALF_H} ${HALF_W},${TILE_H - 10} 22,${HALF_H}`} className="tile-ring tile-ring--sel" />

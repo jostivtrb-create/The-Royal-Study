@@ -295,6 +295,15 @@ body::after {
   stroke: #6fffd0;
   stroke-width: 2;
 }
+.tile--block .tile-top {
+  fill: rgba(255, 110, 130, 0.5);
+  stroke: #ff6e82;
+  stroke-width: 2;
+}
+.tile-ring--block {
+  stroke: #ff5a73;
+  opacity: 0.95;
+}
 .tile--sel .tile-top {
   fill: rgba(255, 224, 130, 0.6);
   stroke: #ffd766;

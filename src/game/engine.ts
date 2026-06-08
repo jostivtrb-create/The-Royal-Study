@@ -55,33 +55,51 @@ export function legalDestinations(
   from: Sq,
   piece: PieceType,
 ): Sq[] {
+  return reachable(occupied, from, piece).free;
+}
+
+/**
+ * Casillas al alcance de la pieza, separando las **libres** (movimiento válido)
+ * de las **bloqueadas** (ocupadas por otra ficha: el caballo/rey caería ahí; los
+ * deslizantes chocan ahí). Sirve para mostrar destinos en verde y rojo.
+ */
+export function reachable(
+  occupied: Set<Sq>,
+  from: Sq,
+  piece: PieceType,
+): { free: Sq[]; blocked: Sq[] } {
   const { row, col } = rc(from);
-  const out: Sq[] = [];
+  const free: Sq[] = [];
+  const blocked: Sq[] = [];
+
+  const step = (r: number, c: number) => {
+    if (!inBoard(r, c)) return;
+    const s = sq(r, c);
+    if (occupied.has(s)) blocked.push(s);
+    else free.push(s);
+  };
 
   if (piece === "K") {
-    for (const [dr, dc] of KING_STEPS) {
-      const r = row + dr,
-        c = col + dc;
-      if (inBoard(r, c) && !occupied.has(sq(r, c))) out.push(sq(r, c));
-    }
+    for (const [dr, dc] of KING_STEPS) step(row + dr, col + dc);
   } else if (piece === "N") {
-    for (const [dr, dc] of KNIGHT_STEPS) {
-      const r = row + dr,
-        c = col + dc;
-      if (inBoard(r, c) && !occupied.has(sq(r, c))) out.push(sq(r, c));
-    }
+    for (const [dr, dc] of KNIGHT_STEPS) step(row + dr, col + dc);
   } else {
     for (const [dr, dc] of SLIDES[piece]) {
       let r = row + dr,
         c = col + dc;
-      while (inBoard(r, c) && !occupied.has(sq(r, c))) {
-        out.push(sq(r, c));
+      while (inBoard(r, c)) {
+        const s = sq(r, c);
+        if (occupied.has(s)) {
+          blocked.push(s); // primera ficha que corta el camino
+          break;
+        }
+        free.push(s);
         r += dr;
         c += dc;
       }
     }
   }
-  return out;
+  return { free, blocked };
 }
 
 // ---------- Utilidades de posición ----------

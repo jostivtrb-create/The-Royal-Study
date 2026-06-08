@@ -13,6 +13,7 @@ import {
   randomPlacement,
   randomTargetFor,
   rc,
+  reachable,
   solve,
   sq,
   type Action,
@@ -79,13 +80,13 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     }
   }, [phase, positions, used, puzzle]);
 
-  const targets = useMemo(() => {
-    if (phase !== "solving" || !selected) return [] as Array<[number, number]>;
-    const occ = occupiedOf(positions);
-    return legalDestinations(occ, positions[selected], selected).map((s) => {
-      const { row, col } = rc(s);
-      return [row, col] as [number, number];
-    });
+  const marks = useMemo(() => {
+    const empty = { free: [] as Array<[number, number]>, blocked: [] as Array<[number, number]> };
+    if (phase !== "solving" || !selected) return empty;
+    const { free, blocked } = reachable(occupiedOf(positions), positions[selected], selected);
+    const toRC = (arr: number[]) =>
+      arr.map((s) => { const { row, col } = rc(s); return [row, col] as [number, number]; });
+    return { free: toRC(free), blocked: toRC(blocked) };
   }, [phase, selected, positions]);
 
   function nextPuzzle() {
@@ -241,7 +242,8 @@ export default function Solo({ onExit }: { onExit: () => void }) {
         <Board
           positions={placementToPositions(positions)}
           selected={selected}
-          targets={targets}
+          targets={marks.free}
+          blocked={marks.blocked}
           onTileClick={onTileClick}
           interactive={phase === "solving"}
           spinTick={spin.tick}
