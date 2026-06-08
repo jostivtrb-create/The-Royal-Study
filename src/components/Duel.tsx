@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Confetti from "./Confetti";
 import OpIcon from "./OpIcon";
+import FitScreen from "./FitScreen";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -302,11 +303,19 @@ export default function Duel({
   const leader = scores.indexOf(maxScore);
 
   return (
-    <div className="app screen-in">
+    <div className="app app--fit screen-in">
+      <FitScreen>
       <div className="gamebar">
         <button className="exit-btn glass" onClick={() => setConfirmExit(true)} aria-label="Salir de la partida">✕</button>
         <div className="round-chip glass">Ronda {round}<span>/{TOTAL_ROUNDS}</span></div>
-        <span style={{ width: 36 }} />
+        {phase === "execute" ? (
+          <div className={"movebadge glass" + (used >= budget ? " movebadge--danger" : "")}>
+            <span className="mb-cap">MOV</span>
+            <span key={used} className="mb-num">{used}<small>/{budget}</small></span>
+          </div>
+        ) : (
+          <span style={{ width: 36 }} />
+        )}
       </div>
 
       {/* Marcador de N jugadores */}
@@ -378,11 +387,8 @@ export default function Duel({
 
         {phase === "execute" && (
           <>
-            <div className="panel-q">
-              {nameOf(executorIdx)}: resuélvelo en ≤ {budget}.{" "}
-              <span className={"moves" + (used >= budget ? " moves--danger" : "")}>{used}/{budget}</span>
-            </div>
-            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza, o gira/voltea tu tablero"}</div>
+            <div className="panel-q">{nameOf(executorIdx)}, te toca · ≤ {budget} movimientos</div>
+            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza o gira el tablero"}</div>
             <div className="ops">
               {OPS.map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)} disabled={used >= budget}>
@@ -393,6 +399,7 @@ export default function Duel({
           </>
         )}
       </div>
+      </FitScreen>
 
       {/* Selección de número (tapa el tablero para no estudiarlo mientras se decide) */}
       {(phase === "bid" || phase === "counterBid") && (

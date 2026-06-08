@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Confetti from "./Confetti";
 import OpIcon from "./OpIcon";
+import FitScreen from "./FitScreen";
 import { PIECE_ORDER, PIECE_NAME_ES, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -235,11 +236,15 @@ export default function Solo({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="app screen-in">
+    <div className="app app--fit screen-in">
+      <FitScreen>
       <div className="gamebar">
         <button className="exit-btn glass" onClick={onExit} aria-label="Salir">✕</button>
-        <div className="round-chip glass">⭐ {stars}</div>
-        <div className="round-chip glass">{used} mov</div>
+        <div className="stars-chip glass">⭐ <b>{stars}</b></div>
+        <div className="movebadge glass">
+          <span className="mb-cap">MOV</span>
+          <span key={used} className="mb-num">{used}</span>
+        </div>
       </div>
 
       <div className="target glass">
@@ -291,6 +296,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
           </>
         )}
       </div>
+      </FitScreen>
 
       {phase === "reached" && (
         <div className="overlay overlay--solid">

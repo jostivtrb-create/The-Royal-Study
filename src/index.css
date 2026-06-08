@@ -24,11 +24,18 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
   height: 100%;
 }
 
+/* Pantalla fija como un juego: sin scroll ni rebote. */
+html, body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
 body {
+  position: fixed;
+  inset: 0;
   color: var(--ink);
   background:
     radial-gradient(circle at 18% 12%, #fff 0%, rgba(255, 255, 255, 0) 42%),
@@ -36,7 +43,6 @@ body {
     radial-gradient(circle at 50% 110%, var(--amethyst) 0%, rgba(156, 99, 255, 0) 55%),
     linear-gradient(160deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
   background-attachment: fixed;
-  overflow-x: hidden;
 }
 
 /* Partículas mágicas suaves */
@@ -1150,3 +1156,81 @@ body::after {
   transition: transform 0.12s ease;
 }
 .bid-go:active { transform: translateY(1px); }
+
+/* ---------- Pantalla fija (juego) ---------- */
+.app--fit {
+  padding: 0;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+.fit {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.fit-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* ---------- Botones de giro/espejo (más grandes, solo icono) ---------- */
+.ops { gap: 12px; }
+.op-btn {
+  width: 60px;
+  height: 56px;
+  border-radius: 16px;
+}
+.op-svg { width: 30px; height: 30px; }
+
+/* ---------- Insignia de movimientos (prominente y animada) ---------- */
+.movebadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  min-width: 70px;
+  line-height: 1;
+}
+.mb-cap {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.mb-num {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--violet-deep);
+  display: inline-block;
+  margin-top: 2px;
+  animation: numBump 0.34s cubic-bezier(0.3, 1.5, 0.4, 1);
+}
+.mb-num small { font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.movebadge--danger .mb-num { color: #e0457a; }
+@keyframes numBump {
+  0% { transform: scale(1.7); color: #ffb020; }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.stars-chip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 16px;
+  font-size: 18px;
+  color: #f5a93a;
+  font-weight: 800;
+}
+.stars-chip b { color: var(--ink); }

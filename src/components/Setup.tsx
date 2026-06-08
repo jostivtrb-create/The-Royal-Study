@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sfx } from "../game/sfx";
+import FitScreen from "./FitScreen";
 
 const MIN = 2;
 const MAX = 6;
@@ -35,7 +36,8 @@ export default function Setup({
   }
 
   return (
-    <div className="app screen-in">
+    <div className="app app--fit screen-in">
+      <FitScreen>
       <header className="title"><h1>Jugar local</h1></header>
 
       <div className="setup glass">
@@ -68,6 +70,7 @@ export default function Setup({
       </div>
 
       <button className="bid-go" onClick={start}>Comenzar ✦</button>
+      </FitScreen>
     </div>
   );
 }

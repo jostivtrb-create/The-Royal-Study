@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Piece from "./Piece";
 import OpIcon from "./OpIcon";
+import FitScreen from "./FitScreen";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -110,7 +111,8 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
       : [];
 
   return (
-    <div className="app tut">
+    <div className="app tut app--fit">
+      <FitScreen>
       <div className="tut-top">
         <div className="tut-dots">
           {Array.from({ length: TOTAL }, (_, i) => (
@@ -202,6 +204,7 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
           )}
         </div>
       )}
+      </FitScreen>
     </div>
   );
 }
