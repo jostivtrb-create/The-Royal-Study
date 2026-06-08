@@ -85,6 +85,7 @@ export default function Duel({
   const [secs, setSecs] = useState<number>(init.secs);
   const [solved, setSolved] = useState<boolean>(init.solved);
   const [confirmExit, setConfirmExit] = useState(false);
+  const [spin, setSpin] = useState<{ tick: number; op: Op }>({ tick: 0, op: "rotCW" });
 
   const nameOf = (i: number) => players[i] ?? `Jugador ${i + 1}`;
 
@@ -263,6 +264,7 @@ export default function Duel({
     if (phase !== "execute") return;
     sfx.flip();
     haptics.light();
+    setSpin((s) => ({ tick: s.tick + 1, op })); // dispara la animación de giro
     setPositions((p) => applyOp(p, op)); // gira TODO tu tablero como una unidad
     setUsed((u) => u + 1);
     setSelected(null);
@@ -310,6 +312,8 @@ export default function Duel({
           selected={selected}
           targets={targets}
           onTileClick={onTileClick}
+          spinTick={spin.tick}
+          spinOp={spin.op}
         />
       </div>
 
@@ -326,8 +330,8 @@ export default function Duel({
             <div className="panel-q">
               {nameOf(low.idx)} apostó <strong>{low.bid}</strong>. ¿Alguien lo mejora?
             </div>
-            <div className="timer">
-              <div className="timer-bar" style={{ width: `${(secs / COUNTER_SECONDS) * 100}%` }} />
+            <div className={"timer" + (secs <= 5 ? " timer--low" : "")}>
+              <div className={"timer-bar" + (secs <= 5 ? " timer-bar--low" : "")} style={{ width: `${(secs / COUNTER_SECONDS) * 100}%` }} />
               <span className="timer-n">{secs}s</span>
             </div>
             <button

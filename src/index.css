@@ -81,11 +81,16 @@ body::before {
   font-size: 30px;
   letter-spacing: 0.5px;
   font-weight: 800;
-  background: linear-gradient(120deg, var(--violet-deep), var(--amethyst), #d36bff);
+  background: linear-gradient(100deg, var(--violet-deep), var(--amethyst) 35%, #e58bff 50%, var(--amethyst) 65%, var(--violet-deep));
+  background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 2px 6px rgba(124, 77, 255, 0.25));
+  animation: shimmer 7s linear infinite;
+}
+@keyframes shimmer {
+  to { background-position: 220% center; }
 }
 .title p {
   margin: 4px 0 0;
@@ -166,6 +171,11 @@ body::before {
   fill: rgba(255, 224, 130, 0.6);
   stroke: #ffd766;
   stroke-width: 2.5;
+}
+.tile-ring--sel {
+  stroke: #ffd766;
+  opacity: 1;
+  animation: ringPulse 1.2s ease-in-out infinite;
 }
 
 .piece-slot {
@@ -376,6 +386,38 @@ body::before {
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
+}
+.timer-bar--low {
+  background: linear-gradient(90deg, #ff9a59, #e0457a) !important;
+}
+.timer--low {
+  animation: timerPulse 0.85s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 69, 122, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(224, 69, 122, 0.28); }
+}
+
+/* Aparición escalonada de los números de apuesta */
+.overlay .bid-row .chip {
+  animation: chipPop 0.3s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+.overlay .bid-row .chip:nth-child(2) { animation-delay: 0.03s; }
+.overlay .bid-row .chip:nth-child(3) { animation-delay: 0.06s; }
+.overlay .bid-row .chip:nth-child(4) { animation-delay: 0.09s; }
+.overlay .bid-row .chip:nth-child(5) { animation-delay: 0.12s; }
+.overlay .bid-row .chip:nth-child(6) { animation-delay: 0.15s; }
+.overlay .bid-row .chip:nth-child(7) { animation-delay: 0.18s; }
+.overlay .bid-row .chip:nth-child(8) { animation-delay: 0.21s; }
+@keyframes chipPop {
+  from { opacity: 0; transform: translateY(8px) scale(0.8); }
+  to { opacity: 1; transform: none; }
+}
+
+.moves--danger { animation: movePulse 0.7s ease-in-out infinite; }
+@keyframes movePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 
 .chip--pass {
