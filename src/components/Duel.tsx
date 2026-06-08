@@ -305,6 +305,7 @@ export default function Duel({
   return (
     <div className="app app--fit screen-in">
       <FitScreen>
+      <div className="gscene gscene--duel">
       <div className="gamebar">
         <button className="exit-btn glass" onClick={() => setConfirmExit(true)} aria-label="Salir de la partida">✕</button>
         <div className="round-chip glass">Ronda {round}<span>/{TOTAL_ROUNDS}</span></div>
@@ -397,6 +398,7 @@ export default function Duel({
             </div>
           </>
         )}
+      </div>
       </div>
       </FitScreen>
 

@@ -255,6 +255,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
   return (
     <div className="app app--fit screen-in">
       <FitScreen>
+      <div className="gscene">
       <div className="gamebar">
         <button className="exit-btn glass" onClick={onExit} aria-label="Salir">✕</button>
         <div className="stars-chip glass">⭐ <b>{stars}</b></div>
@@ -315,6 +316,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
             <button className="bid-go" onClick={nextPuzzle}>Siguiente puzzle →</button>
           </>
         )}
+      </div>
       </div>
       </FitScreen>
 

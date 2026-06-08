@@ -1281,3 +1281,38 @@ body::after {
   padding: 7px 16px;
 }
 .min-tag b { color: var(--violet-deep); font-size: 17px; }
+
+/* ---------- Escena del juego: rejilla adaptable (retrato / horizontal) ---------- */
+.gscene {
+  display: grid;
+  justify-content: center;
+  align-content: center;
+  gap: 12px 24px;
+  grid-template-areas: "bar" "obj" "board" "ctrl";
+}
+.gscene--duel { grid-template-areas: "bar" "score" "obj" "board" "ctrl"; }
+.gscene > * { justify-self: center; }
+.gscene > .gamebar { grid-area: bar; }
+.gscene > .scoreboard { grid-area: score; }
+.gscene > .target { grid-area: obj; }
+.gscene > .board-wrap { grid-area: board; }
+.gscene > .controls { grid-area: ctrl; }
+
+@media (orientation: landscape) {
+  .gscene {
+    grid-template-columns: auto auto;
+    align-items: center;
+    grid-template-areas:
+      "bar  board"
+      "obj  board"
+      "ctrl board";
+  }
+  .gscene--duel {
+    grid-template-areas:
+      "bar   board"
+      "score board"
+      "obj   board"
+      "ctrl  board";
+  }
+  .gscene > .board-wrap { align-self: center; }
+}
