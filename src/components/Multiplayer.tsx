@@ -1,8 +1,9 @@
 import { sfx } from "../game/sfx";
 
-export default function Multiplayer({ onLocal }: { onLocal: () => void }) {
+export default function Multiplayer({ onBack, onLocal }: { onBack: () => void; onLocal: () => void }) {
   return (
     <div className="app app--center screen-in">
+      <button className="back-fab glass" onClick={onBack} aria-label="Volver">←</button>
       <header className="title">
         <h1>Multiplayer</h1>
         <p>Elige cómo jugar con otros</p>

@@ -1319,3 +1319,20 @@ body::after {
 
 /* Centrar verticalmente pantallas de menú cortas */
 .app--center { justify-content: center; }
+
+/* Botón de volver flotante (pantallas de menú) */
+.back-fab {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: calc(env(safe-area-inset-left) + 12px);
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-brd);
+  color: var(--violet-deep);
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 20;
+}
+.back-fab:active { transform: translateY(1px); }

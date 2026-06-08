@@ -7,8 +7,10 @@ const MAX = 6;
 
 export default function Setup({
   onStart,
+  onBack,
 }: {
   onStart: (names: string[]) => void;
+  onBack: () => void;
 }) {
   const [count, setCount] = useState(2);
   const [names, setNames] = useState<string[]>(["", ""]);
@@ -37,6 +39,7 @@ export default function Setup({
 
   return (
     <div className="app app--fit screen-in">
+      <button className="back-fab glass" onClick={onBack} aria-label="Volver">←</button>
       <FitScreen>
       <header className="title"><h1>Jugar local</h1></header>
 

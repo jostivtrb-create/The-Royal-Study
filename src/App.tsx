@@ -10,11 +10,12 @@ import { initSettings } from "./game/settings";
 import { loadSession, saveSession, clearGame, tutorialSeen, markTutorialSeen } from "./game/persist";
 
 type Screen = "home" | "setup" | "game" | "solo" | "multiplayer" | "settings" | "tutorial";
+const MAIN: Screen[] = ["home", "game", "solo"]; // pantallas restaurables al recargar
 
 export default function App() {
   const sess = loadSession();
   const savedScreen = (sess?.screen as Screen) ?? "home";
-  const [screen, setScreen] = useState<Screen>(savedScreen === "tutorial" ? "home" : savedScreen);
+  const [screen, setScreen] = useState<Screen>(MAIN.includes(savedScreen) ? savedScreen : "home");
   const [players, setPlayers] = useState<string[]>(sess?.players ?? ["Jugador 1", "Jugador 2"]);
   // A dónde ir cuando termina/salta el tutorial.
   const afterTut = useRef<Screen>("solo");
@@ -23,9 +24,9 @@ export default function App() {
     initSettings();
   }, []);
 
-  // Guarda la sesión (no persiste pantallas transitorias como el tutorial).
+  // Guarda la sesión solo de pantallas principales (las de menú/transitorias no).
   useEffect(() => {
-    if (screen !== "tutorial") saveSession({ screen, players });
+    saveSession({ screen: MAIN.includes(screen) ? screen : "home", players });
   }, [screen, players]);
 
   // Navegación con el botón "atrás" del navegador (no cierra la app).
@@ -43,16 +44,15 @@ export default function App() {
     setScreen(to);
     history.pushState({ screen: to }, "");
   };
-  // Reemplaza la entrada actual (para no dejar el tutorial en el historial).
-  const goReplace = (to: Screen) => {
-    setScreen(to);
-    history.replaceState({ screen: to }, "");
+  // Volver al inicio reemplazando la entrada actual (sin dejarla en el historial).
+  const toHome = () => {
+    setScreen("home");
+    history.replaceState({ screen: "home" }, "");
   };
-  const back = () => history.back();
 
   const exitGame = () => {
     clearGame();
-    go("home");
+    toHome();
   };
 
   // "Jugar solo": la primera vez muestra el tutorial; luego va directo.
@@ -74,14 +74,16 @@ export default function App() {
       <Tutorial
         onClose={() => {
           markTutorialSeen();
-          goReplace(afterTut.current); // reemplaza el tutorial: al salir no vuelve a él
+          if (afterTut.current === "solo") go("solo");
+          else toHome();
         }}
       />
     );
-  if (screen === "multiplayer") return <Multiplayer onLocal={() => go("setup")} />;
+  if (screen === "multiplayer") return <Multiplayer onBack={toHome} onLocal={() => go("setup")} />;
   if (screen === "setup")
     return (
       <Setup
+        onBack={toHome}
         onStart={(names) => {
           setPlayers(names);
           clearGame();
@@ -90,8 +92,8 @@ export default function App() {
       />
     );
   if (screen === "game") return <Duel players={players} onExit={exitGame} />;
-  if (screen === "solo") return <Solo onExit={back} />;
-  if (screen === "settings") return <Settings />;
+  if (screen === "solo") return <Solo onExit={toHome} />;
+  if (screen === "settings") return <Settings onBack={toHome} />;
   return (
     <Home
       onSolo={playSolo}
