@@ -263,7 +263,7 @@ export default function Duel({
     if (phase !== "execute") return;
     sfx.flip();
     haptics.light();
-    setTarget((t) => applyOp(t, op));
+    setPositions((p) => applyOp(p, op)); // gira TODO tu tablero como una unidad
     setUsed((u) => u + 1);
     setSelected(null);
   }
@@ -321,17 +321,6 @@ export default function Duel({
           </>
         )}
 
-        {phase === "bid" && (
-          <>
-            <div className="panel-q">{nameOf(pendingIdx)}: ¿en cuántos movimientos lo resuelves?</div>
-            <div className="bid-row">
-              {Array.from({ length: MAX_BID }, (_, i) => i + 1).map((n) => (
-                <button key={n} className="chip" onClick={() => confirmBid(n)}>{n}</button>
-              ))}
-            </div>
-          </>
-        )}
-
         {phase === "counter" && low && (
           <>
             <div className="panel-q">
@@ -351,24 +340,13 @@ export default function Duel({
           </>
         )}
 
-        {phase === "counterBid" && low && (
-          <>
-            <div className="panel-q">{nameOf(pendingIdx)}: mejora la apuesta (menos de {low.bid})</div>
-            <div className="bid-row">
-              {Array.from({ length: low.bid - 1 }, (_, i) => i + 1).map((n) => (
-                <button key={n} className="chip" onClick={() => confirmCounter(n)}>{n}</button>
-              ))}
-            </div>
-          </>
-        )}
-
         {phase === "execute" && (
           <>
             <div className="panel-q">
               {nameOf(executorIdx)}: resuélvelo en ≤ {budget}.{" "}
               <span className={"moves" + (used >= budget ? " moves--danger" : "")}>{used}/{budget}</span>
             </div>
-            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza o transforma el objetivo"}</div>
+            <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza, o gira/voltea tu tablero"}</div>
             <div className="ops">
               {OPS.map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)} disabled={used >= budget}>
@@ -379,6 +357,35 @@ export default function Duel({
           </>
         )}
       </div>
+
+      {/* Selección de número (tapa el tablero para no estudiarlo mientras se decide) */}
+      {(phase === "bid" || phase === "counterBid") && (
+        <div className="overlay overlay--solid">
+          <div className="overlay-card glass screen-in">
+            <div className="overlay-emoji">🎯</div>
+            <h2>{nameOf(pendingIdx)}</h2>
+            <p>
+              {phase === "bid"
+                ? "¿En cuántos movimientos lo resuelves?"
+                : `Mejora la apuesta: menos de ${low?.bid ?? 0}`}
+            </p>
+            <div className="bid-row">
+              {(phase === "bid"
+                ? Array.from({ length: MAX_BID }, (_, i) => i + 1)
+                : Array.from({ length: (low?.bid ?? 1) - 1 }, (_, i) => i + 1)
+              ).map((n) => (
+                <button
+                  key={n}
+                  className="chip"
+                  onClick={() => (phase === "bid" ? confirmBid(n) : confirmCounter(n))}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmar salida de la partida */}
       {confirmExit && (
@@ -397,7 +404,7 @@ export default function Duel({
 
       {/* Selector de jugador (botón único → ¿quién fue?) */}
       {picking && (
-        <div className="overlay" onClick={() => setPicking(null)}>
+        <div className="overlay overlay--solid" onClick={() => setPicking(null)}>
           <div className="overlay-card glass screen-in" onClick={(e) => e.stopPropagation()}>
             <h2>¿Quién fue?</h2>
             <div className="picker-grid">

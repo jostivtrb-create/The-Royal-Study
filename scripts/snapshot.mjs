@@ -92,6 +92,11 @@ await clickRe(/Continuar/i);                   // reinicia puzzle → ejecuta el
 await page.waitForTimeout(600);
 await shot("09-handoff-execute");
 
+// Rotar el tablero de trabajo (gira todas las piezas juntas).
+await page.locator(".op-btn").first().click({ force: true });
+await page.waitForTimeout(800);
+await shot("09b-rotated");
+
 // Ajustes (limpiar almacenamiento para volver a Home)
 await page.evaluate(() => localStorage.clear());
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });

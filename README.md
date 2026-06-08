@@ -15,8 +15,11 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
 4. **Rebatir:** durante **20 s**, **un solo** jugador puede rebatir (el primero
    en pulsar "¡Yo lo mejoro!"): elige quién fue y apuesta un número menor; ese
    jugador pasa a ejecutar. Sin cadena. Si nadie rebate, ejecuta el que apostó.
-5. **Ejecución:** mueve las piezas (reglas de ajedrez) y puede **rotar/reflejar**
-   el objetivo (cada transformación cuesta 1 movimiento).
+5. **Ejecución:** mueve las piezas (reglas de ajedrez) y puede **rotar/voltear
+   su propio tablero** como una unidad para alinearlo con el objetivo (cada
+   giro/volteo cuesta 1 movimiento; el objetivo es la referencia fija).
+   Al elegir el número de movimientos, una pantalla cubre el tablero para no
+   poder estudiarlo mientras se decide.
    - Si llega al objetivo en ≤ su apuesta → **gana 1 punto** (fin de la ronda).
    - Si **el que rebatió falla** → pierde 1 punto, **se reinicia el puzzle** y le
      toca al que apostó primero, con el número que él había puesto. Si ese
