@@ -68,19 +68,15 @@ await clickExact("3");                        // apuesta 3
 await page.waitForTimeout(400);
 await shot("06-counter");
 
-await clickRe(/lo mejoro/i);                  // rebatir
+await clickRe(/lo mejoro/i);                  // rebatir (un solo rebatir)
 await page.waitForTimeout(400);
 await shot("07-pick-challenger");
 
 await page.locator(".pick-btn").first().click({ force: true });
 await page.waitForTimeout(300);
-await clickExact("1");                         // mejora a 1
-await page.waitForTimeout(400);
-await shot("08-counter2");
-
-// Esperar a que expire el temporizador (20s) → ejecución.
-await page.waitForTimeout(21000);
-await shot("09-execute");
+await clickExact("1");                         // mejora a 1 → ejecuta directamente
+await page.waitForTimeout(500);
+await shot("08-execute");
 
 await selectMovablePiece();
 await page.waitForTimeout(200);
@@ -90,19 +86,19 @@ if (await tgt.count()) {
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2); // 1 mov → falla
 }
 await page.waitForTimeout(700);
-await shot("10-result");
+await shot("09-result");
 
 await clickRe(/Siguiente ronda/i);
 await page.waitForTimeout(700);
-await shot("11-round2");
+await shot("10-round2");
 
 // Ajustes
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await clickRe(/Ajustes/i);
 await page.waitForTimeout(400);
-await shot("12-settings");
+await shot("11-settings");
 
 await browser.close();
 server.close();
-console.log("OK: capturas 01..12");
+console.log("OK: capturas 01..11");

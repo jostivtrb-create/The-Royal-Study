@@ -52,20 +52,18 @@ export default function Duel({
   const [picking, setPicking] = useState<null | "bidder" | "challenger">(null);
   const [pendingIdx, setPendingIdx] = useState<number>(0); // quien está eligiendo número
   const [low, setLow] = useState<{ idx: number; bid: number } | null>(null);
-  const [prevIdx, setPrevIdx] = useState<number | null>(null);
   const [executorIdx, setExecutorIdx] = useState<number>(0);
   const [budget, setBudget] = useState<number>(0);
   const [used, setUsed] = useState<number>(0);
   const [selected, setSelected] = useState<PieceType | null>(null);
   const [secs, setSecs] = useState(COUNTER_SECONDS);
-  const [roundWinner, setRoundWinner] = useState<number | null>(null);
   const [solved, setSolved] = useState(false);
 
   const nameOf = (i: number) => players[i] ?? `Jugador ${i + 1}`;
 
-  // Temporizador de la contra-apuesta.
+  // Temporizador de la contra-apuesta (se pausa mientras se elige jugador).
   useEffect(() => {
-    if (phase !== "counter") return;
+    if (phase !== "counter" || picking) return;
     if (secs <= 0) {
       if (low) startExecute(low.idx, low.bid);
       return;
@@ -74,27 +72,25 @@ export default function Duel({
     if (secs <= 3) haptics.light();
     const id = setTimeout(() => setSecs((s) => s - 1), 1000);
     return () => clearTimeout(id);
-  }, [phase, secs]);
+  }, [phase, secs, picking]);
 
   // Éxito/fracaso durante la ejecución.
   useEffect(() => {
     if (phase !== "execute") return;
     if (equalPlacement(positions, target)) {
-      finishRound(executorIdx, true);
+      finishRound(true);
     } else if (used >= budget) {
-      finishRound(prevIdx, false); // falló: punto a quien le robó el turno (o nadie)
+      finishRound(false);
     }
   }, [phase, positions, target, used, budget]);
 
   function resetRoundVars() {
     setPicking(null);
     setLow(null);
-    setPrevIdx(null);
     setBudget(0);
     setUsed(0);
     setSelected(null);
     setSecs(COUNTER_SECONDS);
-    setRoundWinner(null);
     setSolved(false);
   }
 
@@ -140,17 +136,13 @@ export default function Duel({
     sfx.bid();
     haptics.light();
     setLow({ idx: pendingIdx, bid: n });
-    setPrevIdx(null);
     setSecs(COUNTER_SECONDS);
     setPhase("counter");
   }
   function confirmCounter(n: number) {
     sfx.bid();
     haptics.light();
-    setPrevIdx(low ? low.idx : null);
-    setLow({ idx: pendingIdx, bid: n });
-    setSecs(COUNTER_SECONDS);
-    setPhase("counter");
+    startExecute(pendingIdx, n); // un solo rebatir: el retador ejecuta directamente
   }
 
   function startExecute(idx: number, b: number) {
@@ -161,18 +153,16 @@ export default function Duel({
     setPhase("execute");
   }
 
-  function finishRound(winnerIdx: number | null, didSolve: boolean) {
+  function finishRound(didSolve: boolean) {
     setSolved(didSolve);
     if (didSolve) {
       sfx.success();
       haptics.success();
+      setScores((s) => s.map((v, i) => (i === executorIdx ? v + 1 : v)));
     } else {
       sfx.fail();
       haptics.fail();
-    }
-    setRoundWinner(winnerIdx);
-    if (winnerIdx != null) {
-      setScores((s) => s.map((v, i) => (i === winnerIdx ? v + 1 : v)));
+      setScores((s) => s.map((v, i) => (i === executorIdx ? v - 1 : v))); // pierde 1 (permite negativos)
     }
     setPhase("result");
   }
@@ -350,15 +340,15 @@ export default function Duel({
       {phase === "result" && (
         <div className="overlay">
           <div className="overlay-card glass screen-in">
-            {roundWinner != null && <Confetti count={26} />}
-            <div className="overlay-emoji">{roundWinner != null ? "✨" : "🤔"}</div>
+            {solved && <Confetti count={26} />}
+            <div className="overlay-emoji">{solved ? "✨" : "💔"}</div>
             <h2>
-              {roundWinner != null ? `¡Punto para ${nameOf(roundWinner)}!` : "Nadie gana el punto"}
+              {solved ? `¡Punto para ${nameOf(executorIdx)}!` : `${nameOf(executorIdx)} pierde 1 punto`}
             </h2>
             <p>
               {solved
-                ? `${nameOf(executorIdx)} resolvió el objetivo en ${used} de ${budget} movimientos.`
-                : `${nameOf(executorIdx)} no llegó a tiempo (${used}/${budget}).`}
+                ? `Resolvió el objetivo en ${used} de ${budget} movimientos.`
+                : `No llegó a tiempo (${used}/${budget}).`}
             </p>
             <button className="bid-go" onClick={nextRound}>
               {round >= TOTAL_ROUNDS ? "Ver resultado" : "Siguiente ronda →"}

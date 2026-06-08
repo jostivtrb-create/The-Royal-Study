@@ -12,12 +12,12 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
    ronda anterior, dando continuidad).
 3. **Carrera:** hay un **único botón** "¡Lo tengo!"; el primero en reaccionar lo
    pulsa y elige **quién fue**, luego apuesta en cuántos movimientos lo resuelve.
-4. **Rebatir:** durante **20 s**, cualquier otro jugador puede pulsar
-   "¡Yo lo mejoro!", elegir quién fue, y apostar un número menor (se puede
-   encadenar). Quien quede con la apuesta más baja, ejecuta.
+4. **Rebatir:** durante **20 s**, **un solo** jugador puede rebatir (el primero
+   en pulsar "¡Yo lo mejoro!"): elige quién fue y apuesta un número menor; ese
+   jugador pasa a ejecutar. Sin cadena. Si nadie rebate, ejecuta el que apostó.
 5. **Ejecución:** mueve las piezas (reglas de ajedrez) y puede **rotar/reflejar**
    el objetivo (cada transformación cuesta 1 movimiento). Si llega al objetivo
-   en ≤ su apuesta, gana el punto; si falla, el punto va a quien le robó el turno.
+   en ≤ su apuesta, **gana 1 punto**; si falla, **pierde 1 punto** (solo él).
 6. Gana quien tenga más puntos tras **10 rondas**.
 
 ## Desarrollo
