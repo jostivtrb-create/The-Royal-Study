@@ -31,11 +31,19 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
 > Navegación: usa el botón **atrás** del navegador/celular para volver entre
 > pantallas (no cierra la app).
 
+## Inicio y modos
+
+El menú principal ofrece **Jugar solo (Modo infinito)** y **Jugar Multiplayer**
+(→ Local o Online; el online llegará pronto), además de **Cómo jugar** y
+**Ajustes**.
+
 ## Tutorial
 
-La primera vez se muestra un tutorial épico e interactivo (mueve una pieza y
-gira el tablero con ejemplos reales), con opción de **Saltar**. Se puede volver
-a ver cuando quieras desde **Inicio → Cómo jugar**.
+La **primera vez que tocas "Jugar solo"** aparece un tutorial épico e
+**interactivo y guiado**: debes hacer la acción correcta para avanzar (mover el
+Rey, girar el tablero); si te equivocas te corrige con una pista y deshace el
+movimiento. Al terminar o **Saltar**, entras directo al Modo infinito. Se puede
+repetir cuando quieras desde **Inicio → Cómo jugar**.
 
 ## Modo infinito (1 jugador)
 

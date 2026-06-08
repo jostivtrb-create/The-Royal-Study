@@ -14,13 +14,10 @@ import {
   type Placement,
 } from "../game/engine";
 
-type Dest = "setup" | "solo" | undefined;
+const TOTAL = 5;
 
-const TOTAL = 6;
-
-// Ejemplos para los pasos interactivos.
 const MOVE_START: Placement = { R: sq(0, 0), B: sq(0, 2), Q: sq(1, 0), N: sq(2, 0), K: sq(2, 2) };
-const MOVE_TARGET: Placement = { ...MOVE_START, K: sq(2, 1) }; // mover el Rey una casilla
+const MOVE_TARGET: Placement = { ...MOVE_START, K: sq(2, 1) }; // el Rey una casilla a la izquierda
 const ROT_START: Placement = { R: sq(0, 0), B: sq(0, 2), Q: sq(1, 1), N: sq(2, 0), K: sq(2, 2) };
 const ROT_TARGET: Placement = applyOp(ROT_START, "rotCW");
 
@@ -30,61 +27,75 @@ function toPos(p: Placement): Positions {
   return out;
 }
 
-export default function Tutorial({ onClose }: { onClose: (go?: Dest) => void }) {
+export default function Tutorial({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [demo, setDemo] = useState<Placement>(MOVE_START);
   const [selected, setSelected] = useState<PieceType | null>(null);
   const [done, setDone] = useState(false);
+  const [hint, setHint] = useState("");
   const [spin, setSpin] = useState(0);
   const [spark, setSpark] = useState<{ row: number; col: number; tick: number } | null>(null);
 
-  // Reinicia el ejemplo al entrar a cada paso interactivo.
   useEffect(() => {
     setSelected(null);
     setDone(false);
     setSpark(null);
+    setHint("");
     if (step === 2) setDemo(MOVE_START);
     if (step === 3) setDemo(ROT_START);
   }, [step]);
 
-  // Avanza solo tras completar la acción de ejemplo.
-  useEffect(() => {
-    if (!done) return;
-    const id = setTimeout(() => setStep((s) => Math.min(TOTAL - 1, s + 1)), 1400);
-    return () => clearTimeout(id);
-  }, [done]);
+  const next = () => { sfx.tap(); setStep((s) => Math.min(TOTAL - 1, s + 1)); };
+  const prev = () => { sfx.tap(); setStep((s) => Math.max(0, s - 1)); };
 
-  function next() { sfx.tap(); setStep((s) => Math.min(TOTAL - 1, s + 1)); }
-  function prev() { sfx.tap(); setStep((s) => Math.max(0, s - 1)); }
-
-  // Paso 2: mover el Rey a la casilla resaltada.
-  function moveTileClick(row: number, col: number) {
+  // Paso 2: mover el Rey a la casilla resaltada. Movimiento equivocado → deshacer.
+  function moveStepClick(row: number, col: number) {
     if (done) return;
     const clicked = sq(row, col);
     const here = PIECE_ORDER.find((t) => demo[t] === clicked) ?? null;
-    if (here) { sfx.tap(); haptics.light(); setSelected((c) => (c === here ? null : here)); return; }
+    if (here) {
+      sfx.tap(); haptics.light();
+      setSelected((c) => (c === here ? null : here));
+      if (here !== "K") setHint("Esta vez mueve el Rey 👑.");
+      else setHint("");
+      return;
+    }
     if (!selected) return;
     if (!legalDestinations(occupiedOf(demo), demo[selected], selected).includes(clicked)) { setSelected(null); return; }
     const np = { ...demo, [selected]: clicked };
-    sfx.move(); haptics.move();
-    setDemo(np); setSelected(null);
-    if (equalPlacement(np, MOVE_TARGET)) {
-      setSpark({ row, col, tick: Date.now() });
-      sfx.spark(); sfx.success(); haptics.success();
-      setDone(true);
+    if (selected === "K" && equalPlacement(np, MOVE_TARGET)) {
+      sfx.move(); setSpark({ row, col, tick: Date.now() }); sfx.spark(); sfx.success(); haptics.success();
+      setDemo(np); setSelected(null); setHint(""); setDone(true);
+    } else {
+      // movimiento equivocado: deshacer y guiar
+      sfx.fail(); haptics.fail();
+      setSelected(null);
+      setHint("Casi… lleva el Rey 👑 a la casilla brillante.");
     }
   }
 
-  // Paso 3: girar el tablero para igualar el objetivo.
-  function rotate() {
+  // Paso 3: girar (no mover). Si mueve una pieza → deshacer y guiar.
+  function rotateStepClick(row: number, col: number) {
+    if (done) return;
+    const clicked = sq(row, col);
+    const here = PIECE_ORDER.find((t) => demo[t] === clicked) ?? null;
+    if (here) { sfx.tap(); setSelected((c) => (c === here ? null : here)); return; }
+    if (!selected) return;
+    // intentó moverse: aquí se gira
+    sfx.fail(); haptics.fail();
+    setSelected(null);
+    setHint("Aquí no se mueve: ¡gira el tablero! 🔄");
+  }
+  function rotateBoard() {
     if (done) return;
     sfx.spin(); haptics.light();
     const np = applyOp(demo, "rotCW");
     setSpin((s) => s + 1);
     setDemo(np);
+    setSelected(null);
     if (equalPlacement(np, ROT_TARGET)) {
       sfx.success(); haptics.success();
-      setDone(true);
+      setHint(""); setDone(true);
     }
   }
 
@@ -104,9 +115,7 @@ export default function Tutorial({ onClose }: { onClose: (go?: Dest) => void }) 
             <span key={i} className={"tut-dot" + (i === step ? " tut-dot--on" : "")} />
           ))}
         </div>
-        {step < TOTAL - 1 && (
-          <button className="tut-skip" onClick={() => onClose()}>Saltar ✕</button>
-        )}
+        {step < TOTAL - 1 && <button className="tut-skip" onClick={onClose}>Saltar ✕</button>}
       </div>
 
       <div className="tut-stage screen-in" key={step}>
@@ -128,48 +137,40 @@ export default function Tutorial({ onClose }: { onClose: (go?: Dest) => void }) 
           <div className="tut-block">
             <h2 className="tut-h">🎯 El Objetivo</h2>
             <div className="target glass"><span className="target-label">Objetivo</span><Board positions={toPos(MOVE_TARGET)} interactive={false} scale={0.4} /></div>
-            <Board positions={toPos(MOVE_START)} interactive={false} scale={0.78} />
+            <Board positions={toPos(MOVE_START)} interactive={false} scale={0.82} />
             <p className="tut-lead">Arriba está el <b>Objetivo</b>. Tu misión: dejar tu tablero <b>igual al objetivo</b>.</p>
           </div>
         )}
 
         {step === 2 && (
           <div className="tut-block">
-            <h2 className="tut-h">👆 Mueve una pieza</h2>
+            <h2 className="tut-h">👆 Mueve el Rey</h2>
             <div className="target glass"><span className="target-label">Objetivo</span><Board positions={toPos(MOVE_TARGET)} interactive={false} scale={0.4} /></div>
-            <Board positions={toPos(demo)} selected={selected} targets={moveTargets} onTileClick={moveTileClick} spark={spark} />
-            <p className="tut-lead">{done ? "¡Perfecto! 🌟 Así de fácil." : "Toca el Rey 👑 y luego la casilla resaltada para igualar el objetivo."}</p>
+            <Board positions={toPos(demo)} selected={selected} targets={moveTargets} onTileClick={moveStepClick} spark={spark} />
+            <p className={"tut-lead" + (done ? " tut-ok" : hint ? " tut-warn" : "")}>
+              {done ? "¡Excelente! 🌟 Igualaste el objetivo." : hint || "Toca el Rey 👑 y luego la casilla brillante."}
+            </p>
           </div>
         )}
 
         {step === 3 && (
           <div className="tut-block">
-            <h2 className="tut-h">🔄 Gira tu tablero</h2>
+            <h2 className="tut-h">🔄 Gira el tablero</h2>
             <div className="target glass"><span className="target-label">Objetivo</span><Board positions={toPos(ROT_TARGET)} interactive={false} scale={0.4} /></div>
-            <Board positions={toPos(demo)} interactive={false} spinTick={spin} spinOp="rotCW" />
-            <p className="tut-lead">{done ? "¡Genial! Recuerda: cada giro cuenta como 1 movimiento." : "También puedes girar TODO tu tablero. Pulsa el botón para igualar el objetivo."}</p>
-            {!done && <button className="big-btn" onClick={rotate}>⟳ Girar tablero</button>}
+            <Board positions={toPos(demo)} selected={selected} onTileClick={rotateStepClick} spinTick={spin} spinOp="rotCW" />
+            <p className={"tut-lead" + (done ? " tut-ok" : hint ? " tut-warn" : "")}>
+              {done ? "¡Felicidades! 🎉 Recuerda: cada giro cuenta como 1 movimiento." : hint || "Esta vez se resuelve girando. ¡Pulsa el botón!"}
+            </p>
+            {!done && <button className="big-btn" onClick={rotateBoard}>⟳ Girar el tablero</button>}
           </div>
         )}
 
         {step === 4 && (
-          <div className="tut-block">
-            <h2 className="tut-h">🌟 Hazlo perfecto</h2>
-            <p className="tut-lead">Gana quien lo resuelve en <b>menos movimientos</b>.<br /><br />En <b>Modo infinito</b>, lograrlo en el <b>mínimo posible</b> te da una <b>⭐</b>. ¡Y la app siempre conoce la solución óptima!</p>
-            <div className="hero-gems"><span><Piece type="Q" size={72} /></span></div>
-          </div>
-        )}
-
-        {step === 5 && (
           <div className="tut-block tut-final">
-            <div className="overlay-emoji" style={{ fontSize: 54 }}>👑</div>
-            <h1 className="tut-title">¡Que comience la magia!</h1>
-            <p className="tut-lead">Elige cómo jugar:</p>
-            <div className="menu" style={{ maxWidth: 280 }}>
-              <button className="menu-btn menu-btn--primary" onClick={() => onClose("setup")}>✦ Jugar local</button>
-              <button className="menu-btn" onClick={() => onClose("solo")}>♾️ Modo infinito</button>
-              <button className="menu-btn" onClick={() => onClose()}>Ir al inicio</button>
-            </div>
+            <div className="overlay-emoji" style={{ fontSize: 54 }}>🌟</div>
+            <h1 className="tut-title">¡Listo!</h1>
+            <p className="tut-lead">En el <b>Modo infinito</b>, resolver el puzzle en el <b>mínimo de movimientos</b> te da una <b>⭐</b>.<br /><br />¡Probemos!</p>
+            <button className="big-btn" onClick={onClose}>¡Probemos! →</button>
           </div>
         )}
       </div>
@@ -177,7 +178,9 @@ export default function Tutorial({ onClose }: { onClose: (go?: Dest) => void }) 
       {step < TOTAL - 1 && (
         <div className="tut-nav">
           <button className="menu-btn" onClick={prev} disabled={step === 0} style={{ opacity: step === 0 ? 0.4 : 1 }}>← Atrás</button>
-          <button className="bid-go" onClick={next}>{step === 0 ? "Empezar →" : "Siguiente →"}</button>
+          {(step < 2 || done) && (
+            <button className="bid-go" onClick={next}>{step === 0 ? "Empezar →" : "Siguiente →"}</button>
+          )}
         </div>
       )}
     </div>

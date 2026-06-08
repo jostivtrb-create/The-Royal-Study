@@ -1,28 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Home from "./components/Home";
 import Setup from "./components/Setup";
 import Duel from "./components/Duel";
 import Solo from "./components/Solo";
+import Multiplayer from "./components/Multiplayer";
 import Settings from "./components/Settings";
 import Tutorial from "./components/Tutorial";
 import { initSettings } from "./game/settings";
 import { loadSession, saveSession, clearGame, tutorialSeen, markTutorialSeen } from "./game/persist";
 
-type Screen = "home" | "setup" | "game" | "solo" | "settings" | "tutorial";
+type Screen = "home" | "setup" | "game" | "solo" | "multiplayer" | "settings" | "tutorial";
 
 export default function App() {
   const sess = loadSession();
   const savedScreen = (sess?.screen as Screen) ?? "home";
-  const [screen, setScreen] = useState<Screen>(
-    !tutorialSeen() ? "tutorial" : savedScreen === "tutorial" ? "home" : savedScreen,
-  );
+  const [screen, setScreen] = useState<Screen>(savedScreen === "tutorial" ? "home" : savedScreen);
   const [players, setPlayers] = useState<string[]>(sess?.players ?? ["Jugador 1", "Jugador 2"]);
+  // A dónde ir cuando termina/salta el tutorial.
+  const afterTut = useRef<Screen>("solo");
 
   useEffect(() => {
     initSettings();
   }, []);
 
-  // Guarda la sesión (no persiste el tutorial como pantalla restaurable).
+  // Guarda la sesión (no persiste pantallas transitorias como el tutorial).
   useEffect(() => {
     if (screen !== "tutorial") saveSession({ screen, players });
   }, [screen, players]);
@@ -44,28 +45,42 @@ export default function App() {
   };
   const back = () => history.back();
 
-  // Salir de la partida: limpia el guardado y vuelve al inicio.
   const exitGame = () => {
     clearGame();
     go("home");
   };
 
+  // "Jugar solo": la primera vez muestra el tutorial; luego va directo.
+  const playSolo = () => {
+    if (!tutorialSeen()) {
+      afterTut.current = "solo";
+      go("tutorial");
+    } else {
+      go("solo");
+    }
+  };
+  const openTutorial = () => {
+    afterTut.current = "home";
+    go("tutorial");
+  };
+
+  if (screen === "tutorial")
+    return (
+      <Tutorial
+        onClose={() => {
+          markTutorialSeen();
+          go(afterTut.current);
+        }}
+      />
+    );
+  if (screen === "multiplayer") return <Multiplayer onLocal={() => go("setup")} />;
   if (screen === "setup")
     return (
       <Setup
         onStart={(names) => {
           setPlayers(names);
-          clearGame(); // nueva partida → descarta la guardada
+          clearGame();
           go("game");
-        }}
-      />
-    );
-  if (screen === "tutorial")
-    return (
-      <Tutorial
-        onClose={(g) => {
-          markTutorialSeen();
-          go(g ?? "home");
         }}
       />
     );
@@ -74,9 +89,9 @@ export default function App() {
   if (screen === "settings") return <Settings />;
   return (
     <Home
-      onPlayLocal={() => go("setup")}
-      onSolo={() => go("solo")}
-      onTutorial={() => go("tutorial")}
+      onSolo={playSolo}
+      onMultiplayer={() => go("multiplayer")}
+      onTutorial={openTutorial}
       onSettings={() => go("settings")}
     />
   );
