@@ -162,6 +162,15 @@ body::after {
   margin: 0;
 }
 .tut-lead b { color: var(--ink); }
+.tut-legend {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 340px;
+  text-align: center;
+  margin: 2px 0 0;
+}
+.tut-legend b { color: var(--violet-deep); }
 .tut-nav {
   display: flex;
   gap: 12px;

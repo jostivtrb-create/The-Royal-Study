@@ -90,9 +90,12 @@ export default function Solo({ onExit }: { onExit: () => void }) {
 
   function nextPuzzle() {
     sfx.tap();
-    const pz = makePuzzle();
-    setPuzzle(pz);
-    setPositions(pz.start);
+    // Continuidad: las piezas se quedan donde están; solo cambia el objetivo.
+    const start = positions;
+    const { target } = randomTargetFor(start);
+    const { min, path } = solve(start, target);
+    setPuzzle({ start, target, min, path });
+    setPositions(start);
     setUsed(0);
     setPhase("solving");
     setSelected(null);
