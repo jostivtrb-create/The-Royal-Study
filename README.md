@@ -31,6 +31,12 @@ en el celular. Inspirado libremente en el juego de mesa *The Royal Study*.
 > Navegación: usa el botón **atrás** del navegador/celular para volver entre
 > pantallas (no cierra la app).
 
+## Tutorial
+
+La primera vez se muestra un tutorial épico e interactivo (mueve una pieza y
+gira el tablero con ejemplos reales), con opción de **Saltar**. Se puede volver
+a ver cuando quieras desde **Inicio → Cómo jugar**.
+
 ## Modo infinito (1 jugador)
 
 Puzzles aleatorios sin fin. Mueve libremente (los giros/volteos cuentan como

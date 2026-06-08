@@ -4,14 +4,17 @@ import Setup from "./components/Setup";
 import Duel from "./components/Duel";
 import Solo from "./components/Solo";
 import Settings from "./components/Settings";
+import Tutorial from "./components/Tutorial";
 import { initSettings } from "./game/settings";
-import { loadSession, saveSession, clearGame } from "./game/persist";
+import { loadSession, saveSession, clearGame, tutorialSeen, markTutorialSeen } from "./game/persist";
 
-type Screen = "home" | "setup" | "game" | "solo" | "settings";
+type Screen = "home" | "setup" | "game" | "solo" | "settings" | "tutorial";
 
 export default function App() {
   const sess = loadSession();
-  const [screen, setScreen] = useState<Screen>((sess?.screen as Screen) ?? "home");
+  const [screen, setScreen] = useState<Screen>(
+    tutorialSeen() ? ((sess?.screen as Screen) ?? "home") : "tutorial",
+  );
   const [players, setPlayers] = useState<string[]>(sess?.players ?? ["Jugador 1", "Jugador 2"]);
 
   useEffect(() => {
@@ -56,6 +59,15 @@ export default function App() {
         }}
       />
     );
+  if (screen === "tutorial")
+    return (
+      <Tutorial
+        onClose={(g) => {
+          markTutorialSeen();
+          go(g ?? "home");
+        }}
+      />
+    );
   if (screen === "game") return <Duel players={players} onExit={exitGame} />;
   if (screen === "solo") return <Solo onExit={back} />;
   if (screen === "settings") return <Settings />;
@@ -63,6 +75,7 @@ export default function App() {
     <Home
       onPlayLocal={() => go("setup")}
       onSolo={() => go("solo")}
+      onTutorial={() => go("tutorial")}
       onSettings={() => go("settings")}
     />
   );

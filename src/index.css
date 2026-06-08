@@ -97,6 +97,81 @@ body::after {
   100% { opacity: 0; transform: translate(-50%, -58%) scale(1.6) rotate(45deg); }
 }
 
+/* ---------- Tutorial ---------- */
+.tut {
+  justify-content: flex-start;
+  gap: 14px;
+}
+.tut-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 440px;
+}
+.tut-dots { display: flex; gap: 6px; align-items: center; }
+.tut-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(124, 77, 255, 0.25);
+  transition: all 0.25s ease;
+}
+.tut-dot--on { background: var(--violet); width: 22px; border-radius: 4px; }
+.tut-skip {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tut-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  flex: 1;
+}
+.tut-hero, .tut-block, .tut-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.tut-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  background: linear-gradient(100deg, var(--violet-deep), var(--amethyst) 35%, #e58bff 50%, var(--amethyst) 65%, var(--violet-deep));
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(124, 77, 255, 0.25));
+  animation: shimmer 7s linear infinite;
+}
+.tut-h { font-size: 22px; color: var(--violet-deep); margin: 0; font-weight: 800; }
+.tut-lead {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 350px;
+  margin: 0;
+}
+.tut-lead b { color: var(--ink); }
+.tut-nav {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: auto;
+  padding-bottom: 6px;
+}
+.tut-nav .menu-btn, .tut-nav .bid-go { flex: 1; }
+
 /* Corona del líder */
 .crown {
   margin-right: 3px;

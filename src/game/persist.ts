@@ -34,6 +34,9 @@ export const loadSession = () => read<Session>(SESSION);
 export const saveSession = (s: Session) => write(SESSION, s);
 
 // Modo infinito (solitario): estrellas y puzzle en curso.
+export const tutorialSeen = () => read<boolean>("tre-tutorial") === true;
+export const markTutorialSeen = () => write("tre-tutorial", true);
+
 export const loadStars = () => read<number>("tre-stars") ?? 0;
 export const saveStars = (n: number) => write("tre-stars", n);
 export const loadSolo = () => read<any>("tre-solo");
