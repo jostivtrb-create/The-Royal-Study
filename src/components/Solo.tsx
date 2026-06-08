@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Confetti from "./Confetti";
+import OpIcon from "./OpIcon";
 import { PIECE_ORDER, PIECE_NAME_ES, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -222,7 +223,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
     const a = puzzle.path[solStep - 1];
     return a.kind === "move"
       ? `Mover ${PIECE_NAME_ES[a.piece]}`
-      : `Transformar ${opLabel(a.op)}`;
+      : opLabel(a.op);
   }
 
   return (
@@ -260,7 +261,7 @@ export default function Solo({ onExit }: { onExit: () => void }) {
             <div className="hint">{selected ? "Toca una casilla resaltada" : "Toca una pieza, o gira/voltea tu tablero"}</div>
             <div className="ops">
               {(["rotCW", "rotCCW", "mirrorH", "mirrorV"] as Op[]).map((op) => (
-                <button key={op} className="op-btn" onClick={() => doOp(op)}>{opLabel(op)}</button>
+                <button key={op} className="op-btn" onClick={() => doOp(op)}><OpIcon op={op} /></button>
               ))}
             </div>
             <div className="race">
@@ -321,5 +322,5 @@ export default function Solo({ onExit }: { onExit: () => void }) {
 }
 
 function opLabel(op: Op) {
-  return { rotCW: "⟳", rotCCW: "⟲", mirrorH: "⇄", mirrorV: "⇅" }[op];
+  return { rotCW: "Girar ⟳", rotCCW: "Girar ⟲", mirrorH: "Espejo ↘", mirrorV: "Espejo ↗" }[op];
 }

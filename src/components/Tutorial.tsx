@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Piece from "./Piece";
+import OpIcon from "./OpIcon";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -27,10 +28,6 @@ function toPos(p: Placement): Positions {
   for (const t of PIECE_ORDER) out[t] = rc(p[t]);
   return out;
 }
-function opLabel(op: Op) {
-  return { rotCW: "⟳", rotCCW: "⟲", mirrorH: "⇄", mirrorV: "⇅" }[op];
-}
-
 export default function Tutorial({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [demo, setDemo] = useState<Placement>(MOVE_START);
@@ -166,10 +163,10 @@ export default function Tutorial({ onClose }: { onClose: () => void }) {
             </p>
             <div className="ops">
               {(["rotCW", "rotCCW", "mirrorH", "mirrorV"] as Op[]).map((op) => (
-                <button key={op} className="op-btn" onClick={() => tutOp(op)} disabled={done}>{opLabel(op)}</button>
+                <button key={op} className="op-btn" onClick={() => tutOp(op)} disabled={done}><OpIcon op={op} /></button>
               ))}
             </div>
-            <p className="tut-legend">⟳ ⟲ giran el tablero · ⇄ ⇅ lo reflejan (espejo) · cada uno cuenta como <b>1 movimiento</b></p>
+            <p className="tut-legend">Los 2 primeros <b>giran</b> el tablero; los otros lo <b>reflejan</b> (espejo, en diagonal). Cada uno cuenta como <b>1 movimiento</b>.</p>
           </div>
         )}
 

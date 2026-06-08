@@ -610,8 +610,12 @@ body::after {
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .op-btn:active { transform: translateY(1px); }
+.op-svg { display: block; color: var(--violet-deep); }
 .op-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Jugador activo resaltado */

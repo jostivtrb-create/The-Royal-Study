@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Board, { type Positions } from "./Board";
 import Confetti from "./Confetti";
+import OpIcon from "./OpIcon";
 import { PIECE_ORDER, type PieceType } from "../game/pieces";
 import { sfx } from "../game/sfx";
 import { haptics } from "../game/haptics";
@@ -372,7 +373,7 @@ export default function Duel({
             <div className="ops">
               {OPS.map((op) => (
                 <button key={op} className="op-btn" onClick={() => doOp(op)} disabled={used >= budget}>
-                  {opLabel(op)}
+                  <OpIcon op={op} />
                 </button>
               ))}
             </div>
@@ -503,6 +504,3 @@ export default function Duel({
   );
 }
 
-function opLabel(op: Op) {
-  return { rotCW: "⟳", rotCCW: "⟲", mirrorH: "⇄", mirrorV: "⇅" }[op];
-}
