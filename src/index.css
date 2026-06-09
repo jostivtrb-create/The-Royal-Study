@@ -1336,3 +1336,38 @@ body::after {
   z-index: 20;
 }
 .back-fab:active { transform: translateY(1px); }
+
+/* ---------- Online ---------- */
+.online-entry {
+  width: 100%;
+  max-width: 340px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.online-or { text-align: center; color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+.join-row { display: flex; gap: 8px; }
+.join-row .name-input { flex: 1; }
+.code-input { text-transform: uppercase; letter-spacing: 4px; font-weight: 800; text-align: center; }
+.online-err { color: #e0457a; font-size: 13px; font-weight: 700; text-align: center; }
+.online-note { color: var(--ink-soft); font-size: 13px; text-align: center; line-height: 1.4; }
+
+.code-box {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 28px;
+}
+.code-box span { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-soft); }
+.code-box b { font-size: 36px; letter-spacing: 8px; color: var(--violet-deep); }
+
+.lobby-players { width: 100%; max-width: 320px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.lobby-player { padding: 10px 14px; border-radius: 12px; background: rgba(124, 77, 255, 0.1); font-weight: 700; color: var(--ink); }
+.lobby-player--empty { color: var(--ink-soft); font-weight: 500; background: rgba(124, 77, 255, 0.05); }
+
+.countdown {
+  font-size: 120px;
+  font-weight: 800;
+  color: var(--violet-deep);
+  animation: numBump 0.5s ease;
+  filter: drop-shadow(0 6px 16px rgba(91, 47, 196, 0.4));
+}

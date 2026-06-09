@@ -4,12 +4,13 @@ import Setup from "./components/Setup";
 import Duel from "./components/Duel";
 import Solo from "./components/Solo";
 import Multiplayer from "./components/Multiplayer";
+import Online from "./components/Online";
 import Settings from "./components/Settings";
 import Tutorial from "./components/Tutorial";
 import { initSettings } from "./game/settings";
 import { loadSession, saveSession, clearGame, tutorialSeen, markTutorialSeen } from "./game/persist";
 
-type Screen = "home" | "setup" | "game" | "solo" | "multiplayer" | "settings" | "tutorial";
+type Screen = "home" | "setup" | "game" | "solo" | "multiplayer" | "online" | "settings" | "tutorial";
 const MAIN: Screen[] = ["home", "game", "solo"]; // pantallas restaurables al recargar
 
 export default function App() {
@@ -79,7 +80,9 @@ export default function App() {
         }}
       />
     );
-  if (screen === "multiplayer") return <Multiplayer onBack={toHome} onLocal={() => go("setup")} />;
+  if (screen === "multiplayer")
+    return <Multiplayer onBack={toHome} onLocal={() => go("setup")} onOnline={() => go("online")} />;
+  if (screen === "online") return <Online onBack={toHome} />;
   if (screen === "setup")
     return (
       <Setup
